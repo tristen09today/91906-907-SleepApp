@@ -53,12 +53,19 @@ def show_login():
 def show_register():
     register_frame.tkraise()
 
+def show_dashboard():
+    dashboard_frame.tkraise()
+
 #To check if the login is successful or not and display message accordingly
 def handle_login():
     username = username_entry.get()
     password = password_entry.get()
     if login_user(username, password):
         login_message_label.config(text="Login successful!", fg="green")
+
+        welcome.config(text=f"Welcome, {username}!", fg="blue")
+        welcome.pack(pady=10)
+        show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
 
@@ -119,6 +126,17 @@ Button(register_frame, text="Register", command=handle_register).pack(pady=5)
 Button(register_frame, text="Back to Login", command=show_login).pack(pady=5)
 reg_message_label = Label(register_frame, text="", font=("Arial", 12), bg="lightyellow")
 reg_message_label.pack(pady=5)
+
+
+#Dashboard Frame
+dashboard_frame = Frame(content_container, bg="lightblue")
+dashboard_frame.grid(row=0, column=0, sticky="nsew")
+welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
+welcome.pack(pady=10)
+
+Button(dashboard_frame, text="Start Sleep Session").pack(pady=5)
+Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
+
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
