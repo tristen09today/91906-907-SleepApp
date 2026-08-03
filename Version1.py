@@ -4,6 +4,7 @@ This will be a basic version implmenting complex techniques like Json, Tkinter, 
 from tkinter import *
 import json
 import hashlib
+import os
 #storing the user data in a json file
 USER_FILE  ="users.json"
 
@@ -50,5 +51,40 @@ def show_login():
 def show_register():
     register_frame.tkraise()
 
+def handle_login():
+    username = username_entry.get()
+    password = password_entry.get()
+    if login_user(username, password):
+        message_label.config(text="Login successful!", fg="green")
+    else:
+        message_label.config(text="Invalid username or password.", fg="red")
+
+#Window
+
+window=Tk()
+window.title("sleep app")
+window.geometry("400x300")
+
+title_frame = Frame(window, bg="lightblue", height=80)
+title_frame.pack(fill=X)
+
+Label(title_frame, text="Sleep App", font=("Arial", 18)).pack(pady=10)
+
+
+#login Frame
+login_frame = Frame(window, bg="lightgreen")
+login_frame.pack(fill=BOTH, expand=True)
+Label(login_frame, text="Login", font=("Arial", 16)).pack(pady=10)
+Label(login_frame, text="Username").pack()
+username_entry = Entry(login_frame)
+username_entry.pack()
+Label(login_frame, text="Password").pack()
+password_entry = Entry(login_frame, show="*")
+password_entry.pack()
+Button(login_frame, text="Login", command=handle_login).pack(pady=5)
+Button(login_frame, text="Register", command=show_register).pack(pady=5)
+message_label = Label(login_frame, text="", font=("Arial", 12))
+message_label.pack(pady=5)
+window.mainloop()
 
 
