@@ -21,7 +21,9 @@ def load_users():
 
 def save_users(users):
     with open(USER_FILE, "w") as file:
-        json.dump(users, file)
+        #dump the files like n/n
+        json.dump(users, file, indent=4)
+        
 
 def hash_password(password):  
     #turns password into hash so real password is not stored  
@@ -120,5 +122,9 @@ reg_message_label.pack(pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
+
+
+
+
 
 window.mainloop()
