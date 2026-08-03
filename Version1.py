@@ -1,49 +1,50 @@
 '''This is the Version 1 of the code for my Sleep App. 
 This will be a basic version implmenting complex techniques like Json, Tkinter, Hashing, Encryption.'''
 
-
-""" MUST DO DOOSTRINGS """
-
 from tkinter import *
 import json
 import hashlib
+import os
 #storing the user data in a json file
 USER_FILE  ="users.json"
 
-#Class to manage user data, including registration and login functionality
-class UserStore:
-    def __init__(self, filename):
-        self.filename = filename
-        self.users = self.load_users()
-    """This function loads the user data from the json file."""
-    def load_users(self):
-        try:
-            with open(self.filename, "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
+#login function
+#Function for loading users 
+def load_users():
+    try:
+        with open(USER_FILE, "r") as file:
+            users = json.load(file)
+    except FileNotFoundError:
+        users = {}
+    return users
 
-    def save_users(self):
-        with open(self.filename, "w") as file:
-            json.dump(self.users, file, indent=4)
 
-    def hash_password(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+def save_users(users):
+    with open(USER_FILE, "w") as file:
+        #dump the files like n/n
+        json.dump(users, file, indent=4)
+        
 
-    def register_user(self, username, password):
-        if username in self.users:
-            return False  # User already exists
-        self.users[username] = self.hash_password(password)
-        self.save_users()
+def hash_password(password):  
+    #turns password into hash so real password is not stored  
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def register_user(username, password):
+    users = load_users()
+    if username in users:
+        return False  # User already exists
+    users[username] = hash_password(password)
+    save_users(users)
+    return True
+
+
+def login_user(username, password):
+    users = load_users()
+    hashed_password = hash_password(password)
+    if username in users and users[username] == hashed_password:
         return True
-
-    def login_user(self, username, password):
-        hashed_password = self.hash_password(password)
-        if username in self.users and self.users[username] == hashed_password:
-            return True
-        return False
-#one instance of the UserStore class is created to manage user data
-user_store = UserStore(USER_FILE)
+    return False
 
 def show_login():
     login_frame.tkraise()
@@ -132,7 +133,7 @@ dashboard_frame = Frame(content_container, bg="lightblue")
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
 welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
 welcome.pack(pady=10)
-
+#
 Button(dashboard_frame, text="Start Sleep Session").pack(pady=5)
 Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
 
