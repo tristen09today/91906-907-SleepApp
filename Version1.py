@@ -168,10 +168,11 @@ sleep_frame = Frame(content_container, bg="lightgray")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 
 Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").pack(pady=10)
-start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep).pack(pady=5)
+start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep)
+start_button.pack(pady=5)
 Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
-
+wake_button.pack(pady=5)
 
 
 #Show the login frame first when the app opens
