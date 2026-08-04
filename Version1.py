@@ -1,50 +1,53 @@
 '''This is the Version 1 of the code for my Sleep App. 
 This will be a basic version implmenting complex techniques like Json, Tkinter, Hashing, Encryption.'''
 
+
+""" MUST DO DOOSTRINGS """
+
 from tkinter import *
 import json
 import hashlib
-import os
+from datetime import *
+
 #storing the user data in a json file
 USER_FILE  ="users.json"
 
-#login function
-#Function for loading users 
-def load_users():
-    try:
-        with open(USER_FILE, "r") as file:
-            users = json.load(file)
-    except FileNotFoundError:
-        users = {}
-    return users
+#Class to manage user data, including registration and login functionality
+class UserStore:
+    def __init__(self, filename):
+        self.filename = filename
+        self.users = self.load_users()
 
 
-def save_users(users):
-    with open(USER_FILE, "w") as file:
-        #dump the files like n/n
-        json.dump(users, file, indent=4)
-        
+    def load_users(self):
+        """This function loads the user data from the json file."""
+        try:
+            with open(self.filename, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
 
-def hash_password(password):  
-    #turns password into hash so real password is not stored  
-    return hashlib.sha256(password.encode()).hexdigest()
+    def save_users(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.users, file, indent=4)
 
+    def hash_password(self, password):
+        return hashlib.sha256(password.encode()).hexdigest()
 
-def register_user(username, password):
-    users = load_users()
-    if username in users:
-        return False  # User already exists
-    users[username] = hash_password(password)
-    save_users(users)
-    return True
-
-
-def login_user(username, password):
-    users = load_users()
-    hashed_password = hash_password(password)
-    if username in users and users[username] == hashed_password:
+    def register_user(self, username, password):
+        if username in self.users:
+            return False  # User already exists
+        self.users[username] = self.hash_password(password)
+        self.save_users()
         return True
-    return False
+
+    def login_user(self, username, password):
+        hashed_password = self.hash_password(password)
+        if username in self.users and self.users[username] == hashed_password:
+            return True
+        return False
+#one instance of the UserStore class is created to manage user data
+user_store = UserStore(USER_FILE)
 
 def show_login():
     login_frame.tkraise()
@@ -56,11 +59,16 @@ def show_register():
 def show_dashboard():
     dashboard_frame.tkraise()
 
+def show_sleep():
+    sleep_frame.tkraise()
+    
+
+
 #To check if the login is successful or not and display message accordingly
 def handle_login():
     username = username_entry.get()
     password = password_entry.get()
-    if login_user(username, password):
+    if user_store.login_user(username, password):
         login_message_label.config(text="Login successful!", fg="green")
 
         welcome.config(text=f"Welcome, {username}!", fg="blue")
@@ -73,12 +81,29 @@ def handle_login():
 def handle_register():
     username = reg_username_entry.get()
     password = reg_password_entry.get()
-    if register_user(username, password):
+    if user_store.register_user(username, password):
         reg_message_label.config(text="Registration successful! Please login.", fg="green")
         show_login()
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
 
+def handle_sleep():
+    global sleep_time
+    sleep_time = datetime.now()
+    sleep_status = Label(sleep_frame, text=f"Sleep started at: {sleep_time.strftime('%H:%M:%S')}", font=("Arial", 12), bg="lightgray")
+    sleep_status.pack(pady=5)
+    start_button.config(state=DISABLED)
+    wake_button.config(state=NORMAL)    
+    
+
+
+
+
+
+    
+def handle_wake():
+    wake_time = datetime.now()
+    duration= w
 #Window
 
 window=Tk()
@@ -133,9 +158,20 @@ dashboard_frame = Frame(content_container, bg="lightblue")
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
 welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
 welcome.pack(pady=10)
-#
-Button(dashboard_frame, text="Start Sleep Session").pack(pady=5)
+
+Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).pack(pady=5)
 Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
+
+
+#sleep session frame
+sleep_frame = Frame(content_container, bg="lightgray")
+sleep_frame.grid(row=0, column=0, sticky="nsew")
+
+Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").pack(pady=10)
+start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep).pack(pady=5)
+Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
+wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
+
 
 
 #Show the login frame first when the app opens
