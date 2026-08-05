@@ -86,7 +86,7 @@ def handle_register():
         show_login()
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
-
+#To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
     global sleep_time
     sleep_time = datetime.now()
@@ -100,10 +100,16 @@ def handle_sleep():
 
 
 
-    
+ #To show the duration of the sleep session and enable the start button while disabling the wake button   
 def handle_wake():
     wake_time = datetime.now()
-    duration= w
+    duration = wake_time - sleep_time
+    duration = duration - timedelta(microseconds=duration.microseconds)  
+    wake_status = Label(sleep_frame, text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}. Duration: {duration}", font=("Arial", 12), bg="lightgray")
+    wake_status.pack(pady=5)
+    start_button.config(state=NORMAL)
+    wake_button.config(state=DISABLED)
+
 #Window
 
 window=Tk()
@@ -170,9 +176,9 @@ sleep_frame.grid(row=0, column=0, sticky="nsew")
 Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").pack(pady=10)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep)
 start_button.pack(pady=5)
-Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
 wake_button.pack(pady=5)
+Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
 #Show the login frame first when the app opens
