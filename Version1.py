@@ -33,7 +33,7 @@ class UserStore:
 
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
-
+    
     def register_user(self, username, password):
         if username in self.users:
             return False  # User already exists
@@ -69,21 +69,22 @@ def handle_login():
     username = username_entry.get()
     password = password_entry.get()
     if user_store.login_user(username, password):
-        login_message_label.config(text="Login successful!", fg="green")
-
         welcome.config(text=f"Welcome, {username}!", fg="blue")
         welcome.pack(pady=10)
         show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
 
-#To check if the registration is successful or not and display message accordingly
+#To check if the registration is successful or not and display message 
 def handle_register():
     username = reg_username_entry.get()
     password = reg_password_entry.get()
     if user_store.register_user(username, password):
-        reg_message_label.config(text="Registration successful! Please login.", fg="green")
         show_login()
+    if username == "" or password == "":
+        reg_message_label.config(text="Username and password cannot be empty.", fg="red")
+    if len(password) < 8:
+        reg_message_label.config(text="Password must be at least 8 characters long.", fg="red")
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
@@ -189,3 +190,4 @@ login_frame.tkraise()
 
 
 window.mainloop()
+
