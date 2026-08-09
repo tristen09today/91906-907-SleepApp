@@ -77,37 +77,35 @@ def handle_login():
 
 #To check if the registration is successful or not and display message 
 def handle_register():
-    username = reg_username_entry.get()
+    username = reg_username_entry.get().strip()
     password = reg_password_entry.get()
-    if user_store.register_user(username, password):
-        show_login()
     if username == "" or password == "":
         reg_message_label.config(text="Username and password cannot be empty.", fg="red")
+        return
     if len(password) < 8:
         reg_message_label.config(text="Password must be at least 8 characters long.", fg="red")
+        return
+    if user_store.register_user(username, password):
+        show_login()
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
+
+
+
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
     global sleep_time
     sleep_time = datetime.now()
-    sleep_status = Label(sleep_frame, text=f"Sleep started at: {sleep_time.strftime('%H:%M:%S')}", font=("Arial", 12), bg="lightgray")
-    sleep_status.pack(pady=5)
+    sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
     
-
-
-
-
-
  #To show the duration of the sleep session and enable the start button while disabling the wake button   
 def handle_wake():
     wake_time = datetime.now()
     duration = wake_time - sleep_time
     duration = duration - timedelta(microseconds=duration.microseconds)  
-    wake_status = Label(sleep_frame, text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}. Duration: {duration}", font=("Arial", 12), bg="lightgray")
-    wake_status.pack(pady=5)
+    sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
 
@@ -175,6 +173,8 @@ sleep_frame = Frame(content_container, bg="lightgray")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 
 Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").pack(pady=10)
+sleep_status = Label(sleep_frame, text="", font=("Arial", 12), bg="lightgray")
+sleep_status.pack(pady=5)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep)
 start_button.pack(pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
