@@ -12,6 +12,9 @@ from datetime import *
 #storing the user data in a json file
 USER_FILE  ="users.json"
 
+MIN_PASS= 8
+MIN_USER=3
+
 #Class to manage user data, including registration and login functionality
 class UserStore:
     def __init__(self, filename):
@@ -82,8 +85,11 @@ def handle_register():
     if username == "" or password == "":
         reg_message_label.config(text="Username and password cannot be empty.", fg="red")
         return
-    if len(password) < 8:
+    if len(password) < MIN_PASS:
         reg_message_label.config(text="Password must be at least 8 characters long.", fg="red")
+        return
+    if len(username) < MIN_USER:
+        reg_message_label.config(text="Username must be at least 3 characters long.", fg="red")
         return
     if user_store.register_user(username, password):
         show_login()
