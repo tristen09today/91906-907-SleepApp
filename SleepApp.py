@@ -5,15 +5,12 @@ from tkinter import *
 import json
 import hashlib
 from datetime import *
-
+#Generating a key to encrypt the user's sleep history and sleep quality analysis
 from cryptography.fernet import Fernet
 
 key = Fernet.generate_key()
 
 f = Fernet(key)
-
-
-
 
 #storing the user data in a json file
 USER_FILE  ="users.json"
@@ -74,6 +71,27 @@ class UserStore:
         if username in self.users and self.users[username] == hashed_password:
             return True
         return False
+    
+#handles each user's sleep session, also inherits from the JSONStore class to manage sleep data
+class SleepSession(JSONStore):
+    def __init__(self, filename, username):
+        super().__init__(filename)
+        self.username = username
+        if username not in self.data:
+            self.data[username] = []
+
+    def add_sleep_session(self, start_time, end_time):
+        duration = end_time - start_time
+        session_data = {
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration": str(duration)
+        }
+        self.data[self.username].append(session_data)
+        self.save_data()
+
+   
+
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
