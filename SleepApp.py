@@ -1,19 +1,44 @@
 '''This is the Version 2 of the code for my Sleep App. 
-This will be a basic version implmenting complex techniques like Json, Tkinter, Hashing, Encryption.'''
-
-
-""" MUST DO DOOSTRINGS """
-
+This version will be focusing on complex techniques like encryption via cryptography, 
+inheritance and polymorphism. Including, added features like, year verification, sleep histroy, and sleep quality analysis.'''
 from tkinter import *
 import json
 import hashlib
 from datetime import *
+
+from cryptography.fernet import Fernet
+
+key = Fernet.generate_key()
+
+f = Fernet(key)
+
+
+
 
 #storing the user data in a json file
 USER_FILE  ="users.json"
 
 MIN_PASS= 8
 MIN_USER=3
+
+#using inheritance to create a base class for user management and a derived class for sleep session management
+
+class JSONStore:
+    def __init__(self, filename):
+        self.filename = filename
+        self.data = self.load_data()
+
+    def load_data(self):
+        """This function loads the data from the json file."""
+        try:
+            with open(self.filename, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
+
+    def save_data(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.data, file, indent=4)
 
 #Class to manage user data, including registration and login functionality
 class UserStore:
