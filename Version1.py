@@ -1,6 +1,4 @@
-'''This is the Version 1 of the code for my Sleep App. 
-This will be a basic version implmenting complex techniques like Json, Tkinter, Hashing, Encryption.'''
-
+#version 2 
 
 """ MUST DO DOOSTRINGS """
 
