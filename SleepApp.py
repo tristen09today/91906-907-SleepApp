@@ -1,7 +1,8 @@
-'''This is the Version 2 of the code for my Sleep App. 
+'''This is the Version 1 of the code for my Sleep App. 
 This will be a basic version implmenting complex techniques like Json, Tkinter, Hashing, Encryption.'''
 
 
+""" MUST DO DOOSTRINGS """
 
 from tkinter import *
 import json
