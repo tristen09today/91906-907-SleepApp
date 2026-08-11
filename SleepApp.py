@@ -80,18 +80,6 @@ class SleepSession(JSONStore):
         if username not in self.data:
             self.data[username] = []
 
-    def add_sleep_session(self, start_time, end_time):
-        duration = end_time - start_time
-        session_data = {
-            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "duration": str(duration)
-        }
-        self.data[self.username].append(session_data)
-        self.save_data()
-
-   
-
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
@@ -158,6 +146,21 @@ def handle_wake():
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
 
+def show_history():
+    history_frame.tkraise()
+    username = username_entry.get()
+    sleep_session = SleepSession("sleep_history.json", username)
+    sleep_data = sleep_session.data.get(username, [])
+    history_text.delete(1.0, END)  # Clear previous history
+    if not sleep_data:
+        history_text.insert(END, "No sleep history available.")
+    else:
+        for entry in sleep_data:
+            start_time = entry["start_time"]
+            end_time = entry["end_time"]
+            duration = entry["duration"]
+            history_text.insert(END, f"Start: {start_time}, End: {end_time}, Duration: {duration}\n")
+
 #Window
 
 window=Tk()
@@ -175,6 +178,7 @@ content_container = Frame(window)
 content_container.pack(fill=BOTH, expand=True)
 content_container.grid_rowconfigure(0, weight=1)
 content_container.grid_columnconfigure(0, weight=1)
+
 
 #login Frame
 login_frame = Frame(content_container, bg="lightgreen")
@@ -231,12 +235,14 @@ wake_button.pack(pady=5)
 Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
+
+
+
 #Show the login frame first when the app opens
 login_frame.tkraise()
 
 
 
-
-
+#This is to 
 window.mainloop()
 
