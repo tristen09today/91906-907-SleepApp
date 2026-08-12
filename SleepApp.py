@@ -5,9 +5,18 @@ from tkinter import *
 import json
 import hashlib
 from datetime import *
-#Generating a key to encrypt the user's sleep history and sleep quality analysis
 from cryptography.fernet import Fernet
 
+
+
+#CONSTANTS  
+#Constant for creating a json file to store the user data
+USER_FILE  ="users.json"
+MIN_PASS= 8
+MIN_USER=3
+KEY_FILE = "histroy.key"
+
+#Generating a key to encrypt the user's sleep history and sleep quality analysis
 
 def load_key():
     try:
@@ -21,12 +30,6 @@ def load_key():
 
 key = load_key()
 f = Fernet(key)
-
-#CONSTANTS  
-#Constant for creating a json file to store the user data
-USER_FILE  ="users.json"
-MIN_PASS= 8
-MIN_USER=3
 
 #using inheritance to create a base class for user management and a derived class for sleep session management
 
@@ -165,7 +168,24 @@ def handle_wake():
     sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
-
+    
+    # Save the sleep session to the user's sleep history
+    username = username_entry.get()
+    sleep_history = SleepHistory("sleep_history.json", username)
+    sleep_entry = {
+        "start_time": sleep_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "end_time": wake_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "duration": str(duration)
+    }
+  
+    encrypted_entry = {
+        "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
+        "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
+        "duration": f.encrypt(sleep_entry["duration"].encode()).decode()
+    }
+    sleep_history.add_sleep_entry(encrypted_entry)
+    
+#
 def show_history():
     history_frame.tkraise()
     username = username_entry.get()
