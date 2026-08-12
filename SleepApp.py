@@ -283,6 +283,7 @@ history_frame.grid(row=0, column=0, sticky="nsew")
 Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").pack(pady=10)
 history_text = Text(history_frame, width=40, height=10)
 history_text.pack(pady=5)
+history_text.config(state=DISABLED)
 Button(history_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
