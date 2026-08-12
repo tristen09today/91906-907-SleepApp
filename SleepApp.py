@@ -8,13 +8,23 @@ from datetime import *
 #Generating a key to encrypt the user's sleep history and sleep quality analysis
 from cryptography.fernet import Fernet
 
-key = Fernet.generate_key()
 
+def load_key():
+    try:
+        with open("KEY_FILE", "rb") as file:
+            return file.read()
+    except FileNotFoundError:
+        key = Fernet.generate_key()
+        with open("KEY_FILE", "wb") as file:
+            file.write(key)
+        return key
+
+key = load_key()
 f = Fernet(key)
 
-#storing the user data in a json file
+#CONSTANTS  
+#Constant for creating a json file to store the user data
 USER_FILE  ="users.json"
-
 MIN_PASS= 8
 MIN_USER=3
 
@@ -79,6 +89,16 @@ class SleepSession(JSONStore):
         self.username = username
         if username not in self.data:
             self.data[username] = []
+#JUST ADDED
+class SleepHistory(SleepSession):
+    def __init__(self, filename, username):
+        super().__init__(filename, username)
+
+    def add_sleep_entry(self, entry):
+        self.data[self.username].append(entry)
+        self.save_data()
+
+
 
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
@@ -149,18 +169,18 @@ def handle_wake():
 def show_history():
     history_frame.tkraise()
     username = username_entry.get()
-    sleep_session = SleepSession("sleep_history.json", username)
-    sleep_data = sleep_session.data.get(username, [])
+    sleep_history = SleepHistory("sleep_history.json", username)
     history_text.delete(1.0, END)  # Clear previous history
-    if not sleep_data:
-        history_text.insert(END, "No sleep history available.")
-    else:
-        for entry in sleep_data:
-            start_time = entry["start_time"]
-            end_time = entry["end_time"]
-            duration = entry["duration"]
-            history_text.insert(END, f"Start: {start_time}, End: {end_time}, Duration: {duration}\n")
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            decrypted_entry = {
+                "start_time": f.decrypt(entry["start_time"].encode()).decode(),
+                "end_time": f.decrypt(entry["end_time"].encode()).decode(),
+                "duration": f.decrypt(entry["duration"].encode()).decode()
+            }
+            history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}\n")
 
+    
 #Window
 
 window=Tk()
@@ -218,6 +238,7 @@ welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
 welcome.pack(pady=10)
 
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).pack(pady=5)
+Button(dashboard_frame, text="View Sleep History", command=show_history).pack(pady=5)
 Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
 
 
@@ -234,6 +255,15 @@ wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DIS
 wake_button.pack(pady=5)
 Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
+
+#Sleep History Frame
+
+history_frame = Frame(content_container, bg="lightgray")
+history_frame.grid(row=0, column=0, sticky="nsew")
+Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").pack(pady=10)
+history_text = Text(history_frame, width=40, height=10)
+history_text.pack(pady=5)
+Button(history_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
 
