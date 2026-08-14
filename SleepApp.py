@@ -15,12 +15,13 @@ USER_FILE  ="users.json"
 MIN_PASS= 8
 MIN_USER=3
 KEY_FILE = "histroy.key"
+YEAR_LEVELS = range(1, 14)  # Year levels from 1 to 13
+YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
 
 #Generating a key to encrypt the user's sleep history and sleep quality analysis
-
 def load_key():
     try:
-        with open("KEY_FILE", "rb") as file:
+        with open(KEY_FILE, "rb") as file:
             return file.read()
     except FileNotFoundError:
         key = Fernet.generate_key()
@@ -136,6 +137,13 @@ def handle_login():
 def handle_register():
     username = reg_username_entry.get().strip()
     password = reg_password_entry.get()
+    year = reg_year_var.get()
+
+    #if year level not from 9 to 13
+    if int(year) not in YEAR_ELIGIBILITY:
+        reg_message_label.config(text="You must be in year 9 to 13 to register.", fg="red")
+        return
+
     if username == "" or password == "":
         reg_message_label.config(text="Username and password cannot be empty.", fg="red")
         return
@@ -147,6 +155,7 @@ def handle_register():
         return
     if user_store.register_user(username, password):
         show_login()
+        
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
 
@@ -185,7 +194,7 @@ def handle_wake():
     }
     sleep_history.add_sleep_entry(encrypted_entry)
     
-#
+#Function to show the user's sleep history, decrypting the sleep time.
 def show_history():
     history_frame.tkraise()
     username = username_entry.get()
@@ -199,13 +208,13 @@ def show_history():
                 "duration": f.decrypt(entry["duration"].encode()).decode()
             }
             history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}\n")
-
+ 
     
 #Window
 
 window=Tk()
 window.title("sleep app")
-window.geometry("400x300")
+window.geometry("400x350")
 
 title_frame = Frame(window, bg="lightblue", height=80)
 title_frame.pack(fill=X)
@@ -245,6 +254,13 @@ reg_username_entry.pack()
 Label(register_frame, text="Password", bg="lightyellow").pack()
 reg_password_entry = Entry(register_frame, show="*")
 reg_password_entry.pack()
+#year level dropdown menu
+Label(register_frame, text="Year Level", bg="lightyellow").pack()
+reg_year_var = StringVar(register_frame)
+reg_year_var.set(YEAR_LEVELS[0])  # Set default value
+reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS)
+reg_year_menu.pack()
+
 Button(register_frame, text="Register", command=handle_register).pack(pady=5)
 Button(register_frame, text="Back to Login", command=show_login).pack(pady=5)
 reg_message_label = Label(register_frame, text="", font=("Arial", 12), bg="lightyellow")
@@ -283,7 +299,7 @@ history_frame.grid(row=0, column=0, sticky="nsew")
 Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").pack(pady=10)
 history_text = Text(history_frame, width=40, height=10)
 history_text.pack(pady=5)
-history_text.config(state=DISABLED)
+history_text.config(state=NORMAL)
 Button(history_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
