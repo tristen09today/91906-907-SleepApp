@@ -2,6 +2,7 @@
 This version will be focusing on complex techniques like encryption via cryptography, 
 inheritance and polymorphism. Including, added features like, year verification, sleep histroy, and sleep quality analysis.'''
 from tkinter import *
+from tkinter import ttk
 import json
 import hashlib
 from datetime import *
@@ -160,8 +161,19 @@ def handle_register():
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
 
-
-
+def set_goal(goal_time):
+    try:
+        goal_time_obj = datetime.strptime(goal_time, "%H:%M")
+        now = datetime.now()
+        goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
+        if goal_datetime < now:
+            goal_datetime += timedelta(days=1)  # Set to next day if the time has already passed
+        time_until_goal = goal_datetime - now
+        hours, remainder = divmod(time_until_goal.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        welcome.config(text=f"Time until bedtime goal: {hours}h {minutes}m {seconds}s", fg="blue")
+    except ValueError:
+        welcome.config(text="Invalid time format. Please use HH:MM.", fg="red")
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
     global sleep_time
@@ -198,7 +210,7 @@ def handle_wake():
         "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
         "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
         "duration": f.encrypt(sleep_entry["duration"].encode()).decode(),
-        "mood": f.encrypt(sleep_entry.get("mood", "").encode()).decode() if "mood" in sleep_entry else ""
+        "mood": f.encrypt(sleep_entry.get("mood").encode()).decode() if "mood" in sleep_entry else ""
     }
     sleep_history.add_sleep_entry(encrypted_entry)
 
@@ -228,6 +240,11 @@ def show_history():
                 "duration": f.decrypt(entry["duration"].encode()).decode(),
                 "mood": f.decrypt(entry["mood"].encode()).decode()
             }
+            header = ["Date","Start Time", "End Time", "Duration", "Mood"]
+            for column in header:
+                history_text.insert(END, f"{column}\t")
+            history_text.insert(END, "\n")
+
             history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}, Mood: {decrypted_entry['mood']}\n")
  
     
@@ -294,6 +311,27 @@ dashboard_frame.grid(row=0, column=0, sticky="nsew")
 welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
 welcome.pack(pady=10)
 
+#Dropdown values
+hours = [f"{i:02d}" for i in range(24)]
+minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
+
+#Dropdown variables
+hour_var = StringVar(value="12")
+minute_var = StringVar(value="00")
+
+#Layout
+Label(dashboard_frame, text="Set Bedtime Goal:", bg="lightblue").pack(pady=5)
+
+#Create a sub-frame to keep items side-by-side
+goal_input_frame = Frame(dashboard_frame, bg="lightblue")
+goal_input_frame.pack(pady=5)
+combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5)
+combo.pack(side=LEFT, padx=2)
+Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).pack(side=LEFT, padx=2)
+combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5)
+combo2.pack(side=LEFT, padx=2)
+
+Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).pack(pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).pack(pady=5)
 Button(dashboard_frame, text="View Sleep History", command=show_history).pack(pady=5)
 Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
@@ -329,7 +367,7 @@ Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=
 history_frame = Frame(content_container, bg="lightgray")
 history_frame.grid(row=0, column=0, sticky="nsew")
 Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").pack(pady=10)
-history_text = Text(history_frame, width=40, height=10)
+history_text = Text(history_frame, width=50, height=10)
 history_text.pack(pady=5)
 history_text.config(state=NORMAL)
 Button(history_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
