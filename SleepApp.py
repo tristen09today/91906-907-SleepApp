@@ -17,6 +17,7 @@ MIN_USER=3
 KEY_FILE = "histroy.key"
 YEAR_LEVELS = range(1, 14)  # Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
+MOOD_OPTIONs= ["Great", "Okay", "Tired"]
 
 #Generating a key to encrypt the user's sleep history and sleep quality analysis
 def load_key():
@@ -25,7 +26,7 @@ def load_key():
             return file.read()
     except FileNotFoundError:
         key = Fernet.generate_key()
-        with open("KEY_FILE", "wb") as file:
+        with open(KEY_FILE, "wb") as file:
             file.write(key)
         return key
 
@@ -168,6 +169,8 @@ def handle_sleep():
     sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
+    for button in mood_button_frame.winfo_children():
+        button.config(state=DISABLED)  # Disable mood buttons during sleep session
     
  #To show the duration of the sleep session and enable the start button while disabling the wake button   
 def handle_wake():
@@ -177,7 +180,11 @@ def handle_wake():
     sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
+    for button in mood_button_frame.winfo_children():
+        button.config(state=NORMAL)  # Enable mood buttons after waking up
+ 
     
+
     # Save the sleep session to the user's sleep history
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
@@ -190,9 +197,22 @@ def handle_wake():
     encrypted_entry = {
         "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
         "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
-        "duration": f.encrypt(sleep_entry["duration"].encode()).decode()
+        "duration": f.encrypt(sleep_entry["duration"].encode()).decode(),
+        "mood": f.encrypt(sleep_entry.get("mood", "").encode()).decode() if "mood" in sleep_entry else ""
     }
     sleep_history.add_sleep_entry(encrypted_entry)
+
+# Function to handle mood selection
+def handle_mood(mood):
+    sleep_status.config(text=f"Selected mood: {mood}")
+    # Save the mood to the last sleep entry
+    username = username_entry.get()
+    sleep_history = SleepHistory("sleep_history.json", username)
+    if username in sleep_history.data and sleep_history.data[username]:
+        last_entry = sleep_history.data[username][-1]
+        last_entry["mood"] = f.encrypt(mood.encode()).decode()
+        sleep_history.save_data()    
+    
     
 #Function to show the user's sleep history, decrypting the sleep time.
 def show_history():
@@ -205,9 +225,10 @@ def show_history():
             decrypted_entry = {
                 "start_time": f.decrypt(entry["start_time"].encode()).decode(),
                 "end_time": f.decrypt(entry["end_time"].encode()).decode(),
-                "duration": f.decrypt(entry["duration"].encode()).decode()
+                "duration": f.decrypt(entry["duration"].encode()).decode(),
+                "mood": f.decrypt(entry["mood"].encode()).decode()
             }
-            history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}\n")
+            history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}, Mood: {decrypted_entry['mood']}\n")
  
     
 #Window
@@ -289,6 +310,17 @@ start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep)
 start_button.pack(pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
 wake_button.pack(pady=5)
+#Mood Check in 
+mood_button_frame = Frame(sleep_frame, bg="lightgray")
+mood_button_frame.pack(pady=5)
+for mood in MOOD_OPTIONs:
+    Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
+    state=DISABLED
+    ).pack(side=LEFT, padx=5)
+  # Disable mood buttons initially
+
+
+
 Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
 
 
