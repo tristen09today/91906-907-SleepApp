@@ -235,11 +235,16 @@ def show_history():
     history_text.delete(1.0, END)  # Clear previous history
     if username in sleep_history.data:
         for entry in sleep_history.data[username]:
+            if  entry.get("mood"):
+                mood = f.decrypt(entry["mood"].encode()).decode()
+            else:
+                mood = "Not recorded"
+        
             decrypted_entry = {
                 "start_time": f.decrypt(entry["start_time"].encode()).decode(),
                 "end_time": f.decrypt(entry["end_time"].encode()).decode(),
                 "duration": f.decrypt(entry["duration"].encode()).decode(),
-                "mood": f.decrypt(entry["mood"].encode()).decode()
+                "mood": mood
             }
             header = ["Date","Start Time", "End Time", "Duration", "Mood"]
             for column in header:
