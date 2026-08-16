@@ -164,6 +164,7 @@ def handle_register():
 def set_goal(goal_time):
     try:
         goal_time_obj = datetime.strptime(goal_time, "%H:%M")
+        bedtime_goalvar.set(goal_time)
         now = datetime.now()
         goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
         if goal_datetime < now:
@@ -179,6 +180,18 @@ def set_goal(goal_time):
 def handle_sleep():
     global sleep_time
     sleep_time = datetime.now()
+    goal_time = bedtime_goalvar.get()
+    if goal_time != "":
+        goal_time_obj = datetime.strptime(goal_time, "%H:%M")
+        goal_datetime = sleep_time.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
+        
+
+        difference = sleep_time - goal_datetime
+        if difference.total_seconds() > 0:
+            welcome.config(text=f"You are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
+        else:
+            welcome.config(text=f"You are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
+
     sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
@@ -246,10 +259,6 @@ def show_history():
                 "duration": f.decrypt(entry["duration"].encode()).decode(),
                 "mood": mood
             }
-            header = ["Date","Start Time", "End Time", "Duration", "Mood"]
-            for column in header:
-                history_text.insert(END, f"{column}\t")
-            history_text.insert(END, "\n")
 
             history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}, Mood: {decrypted_entry['mood']}\n")
  
@@ -324,6 +333,7 @@ minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
 #Dropdown variables
 hour_var = StringVar(value="12")
 minute_var = StringVar(value="00")
+bedtime_goalvar = StringVar(value="")
 
 #Layout
 Label(dashboard_frame, text="Set Sleep Schedule:", bg="lightblue").pack(pady=5)
