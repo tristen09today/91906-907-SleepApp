@@ -171,9 +171,10 @@ def set_goal(goal_time):
         time_until_goal = goal_datetime - now
         hours, remainder = divmod(time_until_goal.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
-        welcome.config(text=f"Time until bedtime goal: {hours}h {minutes}m {seconds}s", fg="blue")
+        welcome.config(text=f"Time until bedtime: {hours}h {minutes}m {seconds}s", fg="blue")
     except ValueError:
         welcome.config(text="Invalid time format. Please use HH:MM.", fg="red")
+        
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
     global sleep_time
@@ -320,15 +321,16 @@ hour_var = StringVar(value="12")
 minute_var = StringVar(value="00")
 
 #Layout
-Label(dashboard_frame, text="Set Bedtime Goal:", bg="lightblue").pack(pady=5)
+Label(dashboard_frame, text="Set Sleep Schedule:", bg="lightblue").pack(pady=5)
 
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
 goal_input_frame.pack(pady=5)
-combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5)
+combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.pack(side=LEFT, padx=2)
+
 Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).pack(side=LEFT, padx=2)
-combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5)
+combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.pack(side=LEFT, padx=2)
 
 Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).pack(pady=5)
