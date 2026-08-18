@@ -1,6 +1,6 @@
-'''This is the Version 2 of the code for my Sleep App. 
+''''This is the Version 2 of the code for my Sleep App. 
 This version will be focusing on complex techniques like encryption via cryptography, 
-inheritance and polymorphism. Including, added features like, year verification, sleep histroy, and sleep quality analysis.'''
+inheritance. Including, added features like, year verification, sleep histroy, and sleep quality analysis.'''
 from tkinter import *
 from tkinter import ttk
 import json
@@ -59,7 +59,7 @@ class UserStore:
         self.filename = filename
         self.users = self.load_users()
 
-
+  
     def load_users(self):
         """This function loads the user data from the json file."""
         try:
@@ -121,7 +121,7 @@ def show_dashboard():
 
 def show_sleep():
     sleep_frame.tkraise()
-    
+   
 
 
 #To check if the login is successful or not and display message accordingly
@@ -184,13 +184,16 @@ def handle_sleep():
     if goal_time != "":
         goal_time_obj = datetime.strptime(goal_time, "%H:%M")
         goal_datetime = sleep_time.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
-        
 
+        #If the goal time is earlier than the current time, assume it's for the next day
         difference = sleep_time - goal_datetime
+
         if difference.total_seconds() > 0:
             welcome.config(text=f"You are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
         else:
             welcome.config(text=f"You are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
+    else:
+        welcome.config(text="No sleep goal set.", fg="red")
 
     sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
     start_button.config(state=DISABLED)
@@ -336,7 +339,7 @@ minute_var = StringVar(value="00")
 bedtime_goalvar = StringVar(value="")
 
 #Layout
-Label(dashboard_frame, text="Set Sleep Schedule:", bg="lightblue").pack(pady=5)
+Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").pack(pady=5)
 
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
