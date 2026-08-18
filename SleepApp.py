@@ -1,6 +1,7 @@
-''''This is the Version 2 of the code for my Sleep App. 
-This version will be focusing on complex techniques like encryption via cryptography, 
-inheritance. Including, added features like, year verification, sleep histroy, and sleep quality analysis.'''
+''' This is Version 3 of the code for my Sleep App.
+This version will focus on adding more advanced features based on stakeholder feedback. These features will include feedback
+on sleep quality, a weekly sleep summary, graphs, and a active sleep timer so users can actively check how long they hae been sleeping
+In terms of complex techniques, this version will focus on Tkinter's grid geometry'''
 from tkinter import *
 from tkinter import ttk
 import json
