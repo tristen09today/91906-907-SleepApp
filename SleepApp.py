@@ -8,6 +8,8 @@ import json
 import hashlib
 from datetime import *
 from cryptography.fernet import Fernet
+import time
+
 
 
 
@@ -176,7 +178,17 @@ def set_goal(goal_time):
         welcome.config(text=f"Time until bedtime: {hours}h {minutes}m {seconds}s", fg="blue")
     except ValueError:
         welcome.config(text="Invalid time format. Please use HH:MM.", fg="red")
-        
+  
+#This function updates the sleep timer every second while the user is sleeping
+def update_timer(sleep_time):
+    if wake_button['state'] == NORMAL:  # Only update if the user is still sleeping
+        now = datetime.now()
+        duration = now - sleep_time
+        duration = duration - timedelta(microseconds=duration.microseconds)  # Remove microseconds for cleaner display
+        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
+        window.after(1000, update_timer, sleep_time)  # Update every second
+
+
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
     global sleep_time
@@ -201,6 +213,8 @@ def handle_sleep():
     wake_button.config(state=NORMAL)    
     for button in mood_button_frame.winfo_children():
         button.config(state=DISABLED)  # Disable mood buttons during sleep session
+        
+        update_timer(sleep_time)  # Start updating the timer
     
  #To show the duration of the sleep session and enable the start button while disabling the wake button   
 def handle_wake():
@@ -401,6 +415,6 @@ login_frame.tkraise()
 
 
 
-#This is to 
+#This is to  
 window.mainloop()
 
