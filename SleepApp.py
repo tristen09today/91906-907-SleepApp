@@ -183,9 +183,8 @@ def update_timer(sleep_time):
         now = datetime.now()
         duration = now - sleep_time
         duration = duration - timedelta(microseconds=duration.microseconds)  # Remove microseconds for cleaner display
-        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
-        window.after(1000, update_timer, sleep_time)  # Update every second
-
+        timer_label.config(text=str(duration))
+        timer_label.after(1000, update_timer, sleep_time)  # Update every second        
 
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
@@ -219,7 +218,7 @@ def handle_wake():
     wake_time = datetime.now()
     duration = wake_time - sleep_time
     duration = duration - timedelta(microseconds=duration.microseconds)  
-    sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}\nDuration of sleep: {duration}")
+    sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}")
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
     for button in mood_button_frame.winfo_children():
@@ -383,15 +382,15 @@ Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").gri
 sleep_status = Label(sleep_frame, text="", font=("Arial", 12), bg="lightgray")
 sleep_status.grid(row=1, column=0, pady=5)
 timer_label = Label(sleep_frame, text="00:00:00", font=("Arial", 35, "bold"), bg="lightgray")
-timer_label.grid(row=1, column=1, pady=5)
+timer_label.grid(row=2, column=0, pady=5)
 
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
-start_button.grid(row=2, column=0, pady=5)
+start_button.grid(row=3, column=0, pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
-wake_button.grid(row=3, column=0, pady=5)
+wake_button.grid(row=4, column=0, pady=5)
 #Mood Check in 
 mood_button_frame = Frame(sleep_frame, bg="lightgray")
-mood_button_frame.grid(row=4, column=0, pady=5)
+mood_button_frame.grid(row=5, column=0, pady=5)
 for mood in MOOD_OPTIONs:
     Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
     state=DISABLED
@@ -400,7 +399,7 @@ for mood in MOOD_OPTIONs:
 
 
 
-Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).grid(row=5, column=0, pady=5)
+Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).grid(row=6, column=0, pady=5)
 
 
 #Sleep History Frame
