@@ -129,11 +129,9 @@ def show_sleep():
 
 #To check if the login is successful or not and display message accordingly
 def handle_login():
-    username = username_entry.get()
+    username = username_entry.get().strip()
     password = password_entry.get()
     if user_store.login_user(username, password):
-        welcome.config(text=f"Welcome, {username}!", fg="blue")
-        welcome.pack(pady=10)
         show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
@@ -372,20 +370,28 @@ Button(dashboard_frame, text="View Sleep History", command=show_history).pack(pa
 Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
 
 
-#sleep session frame
+#sleep session frame  
 sleep_frame = Frame(content_container, bg="lightgray")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 
-Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").pack(pady=10)
+sleep_frame.grid_columnconfigure(0, weight=1)
+
+
+Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
+
+
 sleep_status = Label(sleep_frame, text="", font=("Arial", 12), bg="lightgray")
-sleep_status.pack(pady=5)
-start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep)
-start_button.pack(pady=5)
+sleep_status.grid(row=1, column=0, pady=5)
+timer_label = Label(sleep_frame, text="00:00:00", font=("Arial", 35, "bold"), bg="lightgray")
+timer_label.grid(row=1, column=1, pady=5)
+
+start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
+start_button.grid(row=2, column=0, pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
-wake_button.pack(pady=5)
+wake_button.grid(row=3, column=0, pady=5)
 #Mood Check in 
 mood_button_frame = Frame(sleep_frame, bg="lightgray")
-mood_button_frame.pack(pady=5)
+mood_button_frame.grid(row=4, column=0, pady=5)
 for mood in MOOD_OPTIONs:
     Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
     state=DISABLED
@@ -394,7 +400,7 @@ for mood in MOOD_OPTIONs:
 
 
 
-Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
+Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).grid(row=5, column=0, pady=5)
 
 
 #Sleep History Frame
