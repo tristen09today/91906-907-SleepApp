@@ -417,14 +417,21 @@ back_button.grid(row=6, column=0, pady=5)
 
 history_frame = Frame(content_container, bg="lightgray")
 history_frame.grid(row=0, column=0, sticky="nsew")
-Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").pack(pady=10)
-history_text = Text(history_frame, width=50, height=10)
-history_text.pack(pady=5)
-history_text.config(state=NORMAL)
-Button(history_frame, text="Back to Dashboard", command=show_dashboard).pack(pady=5)
+history_frame.grid_columnconfigure(0, weight=1)
 
+Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
 
+history_table_frame = Frame(history_frame, bg="lightgray")
+history_table_frame.grid(row=1, column=0, pady=5)
 
+header = ["Start Time", "End Time", "Duration", "Mood"]
+for col, text in enumerate(header):
+    Label(history_table_frame, text=text, font=("Arial", 12, "bold"), bg="lightgray").grid(row=0, column=col, padx=5)
+
+history_rows = Frame(history_table_frame, bg="lightgray")
+history_rows.grid(row=1, column=0, columnspan=len(header), sticky="nsew")
+
+Button(history_frame, text="Back to Dashboard", command=show_dashboard).grid(row=2, column=0, pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
