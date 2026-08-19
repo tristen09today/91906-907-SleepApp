@@ -184,7 +184,7 @@ def update_timer(sleep_time):
         duration = now - sleep_time
         duration = duration - timedelta(microseconds=duration.microseconds)  # Remove microseconds for cleaner display
         timer_label.config(text=str(duration))
-        timer_label.after(1000, update_timer, sleep_time)  # Update every second        
+        timer_label.after(1000, update_timer, sleep_time)  # Update every second
 
 #To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
@@ -210,7 +210,9 @@ def handle_sleep():
     wake_button.config(state=NORMAL)    
     for button in mood_button_frame.winfo_children():
         button.config(state=DISABLED)  # Disable mood buttons during sleep session
-        
+        wake_button.grid()  # Show the wake button during sleep session
+        mood_button_frame.grid_remove()  # Hide the mood buttons during sleep session
+        back_button.grid_remove()  # Hide the back button during sleep session
         update_timer(sleep_time)  # Start updating the timer
     
  #To show the duration of the sleep session and enable the start button while disabling the wake button   
@@ -223,6 +225,10 @@ def handle_wake():
     wake_button.config(state=DISABLED)
     for button in mood_button_frame.winfo_children():
         button.config(state=NORMAL)  # Enable mood buttons after waking up
+        wake_button.grid_remove()  # Hide the wake button after waking up
+        mood_button_frame.grid()  # Show the mood buttons after waking up
+        dashboard_frame.grid()  # Show the dashboard frame after waking up
+        back_button.grid()  # Show the back button after waking up
  
     
 
@@ -283,6 +289,14 @@ def show_history():
 window=Tk()
 window.title("sleep app")
 window.geometry("400x350")
+
+#Tkinter Variables
+
+#Dropdown variables
+hour_var = StringVar(value="12")
+minute_var = StringVar(value="00")
+bedtime_goalvar = StringVar(value="")
+
 
 title_frame = Frame(window, bg="lightblue", height=80)
 title_frame.pack(fill=X)
@@ -345,10 +359,6 @@ welcome.pack(pady=10)
 hours = [f"{i:02d}" for i in range(24)]
 minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
 
-#Dropdown variables
-hour_var = StringVar(value="12")
-minute_var = StringVar(value="00")
-bedtime_goalvar = StringVar(value="")
 
 #Layout
 Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").pack(pady=5)
@@ -394,13 +404,14 @@ mood_button_frame.grid(row=5, column=0, pady=5)
 for mood in MOOD_OPTIONs:
     Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
     state=DISABLED
-    ).pack(side=LEFT, padx=5)
+    ).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
+mood_button_frame.grid_remove()
   # Disable mood buttons initially
 
 
 
-Button(sleep_frame, text="Back to Dashboard", command=show_dashboard).grid(row=6, column=0, pady=5)
-
+back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
+back_button.grid(row=6, column=0, pady=5)
 
 #Sleep History Frame
 
