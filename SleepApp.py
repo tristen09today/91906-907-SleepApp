@@ -124,6 +124,12 @@ def show_dashboard():
 
 def show_sleep():
     sleep_frame.tkraise()
+
+def show_history():
+    history_frame.tkraise()
+
+def show_graphs():
+    graphs_frame.tkraise()
    
 
 
@@ -132,6 +138,7 @@ def handle_login():
     username = username_entry.get().strip()
     password = password_entry.get()
     if user_store.login_user(username, password):
+        welcome.config(text=f"Welcome, {username}!", fg="blue")
         show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
@@ -359,8 +366,11 @@ reg_message_label.pack(pady=5)
 #Dashboard Frame
 dashboard_frame = Frame(content_container, bg="lightblue")
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
+dashboard_frame.grid_columnconfigure(0, weight=1)
 welcome = Label(dashboard_frame, text="", font=("Arial", 16), bg="lightblue")
-welcome.pack(pady=10)
+welcome.grid(row=0, column=0, pady=10)
+
+
 
 #Dropdown values
 hours = [f"{i:02d}" for i in range(24)]
@@ -368,22 +378,23 @@ minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
 
 
 #Layout
-Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").pack(pady=5)
+Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").grid(row=1, column=0, pady=5)
 
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
-goal_input_frame.pack(pady=5)
+goal_input_frame.grid(row=2, column=0, pady=5)
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
-combo.pack(side=LEFT, padx=2)
-
-Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).pack(side=LEFT, padx=2)
+combo.grid(row=0, column=0, padx=2)
+Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=1, padx=2)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
-combo2.pack(side=LEFT, padx=2)
+combo2.grid(row=0, column=2, padx=2)
 
-Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).pack(pady=5)
-Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).pack(pady=5)
-Button(dashboard_frame, text="View Sleep History", command=show_history).pack(pady=5)
-Button(dashboard_frame, text ="Logout", command=show_login).pack(pady=5)
+Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).grid(row=3, column=0, pady=5)
+Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=4, column=0, pady=5)
+Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=5, column=0, pady=5)
+Button(dashboard_frame, text = "Graphs and Analysis", command =show_graphs).grid(row=6, column=0, pady=5)
+
+Button(dashboard_frame, text ="Logout", command=show_login).grid(row=7, column=0, pady=5)
 
 
 #sleep session frame  
@@ -450,8 +461,13 @@ history_rows.bind("<Configure>", lambda e: history_canvas.configure(scrollregion
 history_back_button= Button(history_frame, text="Back to Dashboard", command=show_dashboard)
 history_back_button.grid(row=2, column=0, pady=5)
 
-
-
+#Graphs and Analysis Frame
+graphs_frame = Frame(content_container, bg="lightgray")
+graphs_frame.grid(row=0, column=0, sticky="nsew")
+graphs_label = Label(graphs_frame, text="Graphs and Analysis", font=("Arial", 16), bg="lightgray")
+graphs_label.grid(row=0, column=0, pady=10)
+graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
+graphs_back_button.grid(row=1, column=0, pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
