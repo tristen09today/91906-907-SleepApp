@@ -212,7 +212,7 @@ def handle_sleep():
         button.config(state=DISABLED)  # Disable mood buttons during sleep session
         wake_button.grid()  # Show the wake button during sleep session
         mood_button_frame.grid_remove()  # Hide the mood buttons during sleep session
-        back_button.grid_remove()  # Hide the back button during sleep session
+        sleep_back_button.grid_remove()  # Hide the back button during sleep session
         update_timer(sleep_time)  # Start updating the timer
     
  #To show the duration of the sleep session and enable the start button while disabling the wake button   
@@ -228,7 +228,7 @@ def handle_wake():
         wake_button.grid_remove()  # Hide the wake button after waking up
         mood_button_frame.grid()  # Show the mood buttons after waking up
         dashboard_frame.grid()  # Show the dashboard frame after waking up
-        back_button.grid()  # Show the back button after waking up
+        sleep_back_button.grid()  # Show the back button after waking up
  
     
 
@@ -266,7 +266,7 @@ def show_history():
     history_frame.tkraise()
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
-
+   
     for widget in history_rows.winfo_children():
         widget.destroy()  # Clear previous history entries
 
@@ -285,10 +285,9 @@ def show_history():
             }
 
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
-                Label(history_rows, text=decrypted_entry[key], font=("Arial", 12), bg="white").grid(row=sleep_history.data[username].index(entry), column=col, padx=5, pady=2)
+                Label(history_rows, text=decrypted_entry[key], font=("Arial", 11)).grid(row=sleep_history.data[username].index(entry), column=col, padx=5, pady=2)
 
-            
-            
+        
     
 #Window
 
@@ -296,7 +295,9 @@ window=Tk()
 window.title("sleep app")
 window.geometry("400x350")
 
+
 #Tkinter Variables
+
 
 #Dropdown variables
 hour_var = StringVar(value="12")
@@ -416,28 +417,40 @@ mood_button_frame.grid_remove()
 
 
 
-back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
-back_button.grid(row=6, column=0, pady=5)
+sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
+sleep_back_button.grid(row=6, column=0, pady=5)
 
 #Sleep History Frame
 
 history_frame = Frame(content_container, bg="lightgray")
 history_frame.grid(row=0, column=0, sticky="nsew")
-history_frame.grid_columnconfigure(0, weight=1)
-
-Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
-
 history_table_frame = Frame(history_frame, bg="white", bd=1, relief="solid")
-history_table_frame.grid(row=1, column=0, pady=5)
+history_table_frame.grid(row=1, column=0 , padx=10, pady=10, sticky="nsew")
+
 
 header = ["Start Time", "End Time", "Duration", "Mood"]
 for col, text in enumerate(header):
-    Label(history_table_frame, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=5)
+    Label(history_table_frame, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=15)
 
-history_rows = Frame(history_table_frame, bg="lightgray")
-history_rows.grid(row=1, column=0, columnspan=len(header), sticky="nsew")
+# Create a canvas for the scrollable area
+history_canvas = Canvas(history_table_frame, bg="white", width= 360, height=200)
+history_canvas.grid(row=1, column=0, columnspan=len(header), sticky="nsew")
 
-Button(history_frame, text="Back to Dashboard", command=show_dashboard).grid(row=2, column=0, pady=5)
+#scrollbar for the canvas
+scrollbar = Scrollbar(history_table_frame, orient="vertical", command=history_canvas.yview)
+scrollbar.grid(row=1, column=4, sticky="ns")
+history_canvas.configure(yscrollcommand=scrollbar.set)
+
+history_rows = Frame(history_canvas, bg="white")
+history_canvas.create_window((0, 0), window=history_rows, anchor="nw")
+
+#update scroll region when new entries are added
+history_rows.bind("<Configure>", lambda e: history_canvas.configure(scrollregion=history_canvas.bbox("all")))
+
+history_back_button= Button(history_frame, text="Back to Dashboard", command=show_dashboard)
+history_back_button.grid(row=2, column=0, pady=5)
+
+
 
 
 #Show the login frame first when the app opens
