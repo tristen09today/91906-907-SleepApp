@@ -266,7 +266,10 @@ def show_history():
     history_frame.tkraise()
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
-    history_text.delete(1.0, END)  # Clear previous history
+
+    for widget in history_rows.winfo_children():
+        widget.destroy()  # Clear previous history entries
+
     if username in sleep_history.data:
         for entry in sleep_history.data[username]:
             if  entry.get("mood"):
@@ -281,8 +284,11 @@ def show_history():
                 "mood": mood
             }
 
-            history_text.insert(END, f"Start: {decrypted_entry['start_time']}, End: {decrypted_entry['end_time']}, Duration: {decrypted_entry['duration']}, Mood: {decrypted_entry['mood']}\n")
- 
+            for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
+                Label(history_rows, text=decrypted_entry[key], font=("Arial", 12), bg="white").grid(row=sleep_history.data[username].index(entry), column=col, padx=5, pady=2)
+
+            
+            
     
 #Window
 
@@ -421,17 +427,18 @@ history_frame.grid_columnconfigure(0, weight=1)
 
 Label(history_frame, text="Sleep History", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
 
-history_table_frame = Frame(history_frame, bg="lightgray")
+history_table_frame = Frame(history_frame, bg="white", bd=1, relief="solid")
 history_table_frame.grid(row=1, column=0, pady=5)
 
 header = ["Start Time", "End Time", "Duration", "Mood"]
 for col, text in enumerate(header):
-    Label(history_table_frame, text=text, font=("Arial", 12, "bold"), bg="lightgray").grid(row=0, column=col, padx=5)
+    Label(history_table_frame, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=5)
 
 history_rows = Frame(history_table_frame, bg="lightgray")
 history_rows.grid(row=1, column=0, columnspan=len(header), sticky="nsew")
 
 Button(history_frame, text="Back to Dashboard", command=show_dashboard).grid(row=2, column=0, pady=5)
+
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
