@@ -303,12 +303,17 @@ def show_history():
     for widget in history_rows.winfo_children():
         widget.destroy()  # Clear previous history entries
 
+    header = ["Start Time", "End Time", "Duration", "Mood"]
+    for col, text in enumerate(header):
+         Label(history_rows, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=15)
+
+
     if username in sleep_history.data:
         for entry in sleep_history.data[username]:
             if  entry.get("mood"):
                 mood = f.decrypt(entry["mood"].encode()).decode()
             else:
-                mood = "Not recorded"
+                mood = "Not-recorded"
         
             decrypted_entry = {
                 "start_time": f.decrypt(entry["start_time"].encode()).decode(),
@@ -318,7 +323,7 @@ def show_history():
             }
 
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
-                Label(history_rows, text=decrypted_entry[key], font=("Verdana", 9)).grid(row=sleep_history.data[username].index(entry), column=col, padx=5, pady=2)
+                Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
 
 def mood_graph():
     """This function generates a pie chart 
@@ -423,7 +428,7 @@ bedtime_goalvar = StringVar(value="")
 title_frame = Frame(window, bg="lightblue", height=80)
 title_frame.pack(fill=X)
 
-Label(title_frame, text="Sleep App", font=("Verdana", 18)).pack(pady=10)
+Label(title_frame, text="Sleep App", font=("arial", 18)).pack(pady=10)
 
 #Container to hold login_frame and register_frame in the same spot
 #so tkraise() can bring one to the front and hide the other
@@ -436,7 +441,7 @@ content_container.grid_columnconfigure(0, weight=1)
 #login Frame
 login_frame = Frame(content_container, bg="lightgreen")
 login_frame.grid(row=0, column=0, sticky="nsew")
-Label(login_frame, text="Login", font=("Verdana", 16), bg="lightgreen").pack(pady=10)
+Label(login_frame, text="Login", font=("arial", 16), bg="lightgreen").pack(pady=10)
 Label(login_frame, text="Username", bg="lightgreen").pack()
 username_entry = Entry(login_frame)
 username_entry.pack()
@@ -445,13 +450,13 @@ password_entry = Entry(login_frame, show="*")
 password_entry.pack()
 Button(login_frame, text="Login", command=handle_login).pack(pady=5)
 Button(login_frame, text="Register", command=show_register).pack(pady=5)
-login_message_label = Label(login_frame, text="", font=("Verdana", 12), bg="lightgreen")
+login_message_label = Label(login_frame, text="", font=("arial", 12), bg="lightgreen")
 login_message_label.pack(pady=5)
 
 #register Frame
 register_frame = Frame(content_container, bg="lightyellow")
 register_frame.grid(row=0, column=0, sticky="nsew")
-Label(register_frame, text="Register", font=("Verdana", 16), bg="lightyellow").pack(pady=10)
+Label(register_frame, text="Register", font=("arial", 16), bg="lightyellow").pack(pady=10)
 Label(register_frame, text="Username", bg="lightyellow").pack()
 reg_username_entry = Entry(register_frame)
 reg_username_entry.pack()
@@ -467,7 +472,7 @@ reg_year_menu.pack()
 
 Button(register_frame, text="Register", command=handle_register).pack(pady=5)
 Button(register_frame, text="Back to Login", command=show_login).pack(pady=5)
-reg_message_label = Label(register_frame, text="", font=("Verdana", 12), bg="lightyellow")
+reg_message_label = Label(register_frame, text="", font=("arial", 12), bg="lightyellow")
 reg_message_label.pack(pady=5)
 
 
@@ -475,7 +480,7 @@ reg_message_label.pack(pady=5)
 dashboard_frame = Frame(content_container, bg="lightblue")
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
 dashboard_frame.grid_columnconfigure(0, weight=1)
-welcome = Label(dashboard_frame, text="", font=("Verdana", 16), bg="lightblue")
+welcome = Label(dashboard_frame, text="", font=("arial", 13), bg="lightblue")
 welcome.grid(row=0, column=0, pady=10)
 
 
@@ -493,7 +498,7 @@ goal_input_frame = Frame(dashboard_frame, bg="lightblue")
 goal_input_frame.grid(row=2, column=0, pady=5)
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.grid(row=0, column=0, padx=2)
-Label(goal_input_frame, text=":", bg="lightblue", font=("Verdana", 12, "bold")).grid(row=0, column=1, padx=2)
+Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=1, padx=2)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
 
@@ -510,10 +515,10 @@ sleep_frame = Frame(content_container, bg="lightgray")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 sleep_frame.grid_columnconfigure(0, weight=1)
 
-Label(sleep_frame, text="Sleep Session", font=("Verdana", 16), bg="lightgray").grid(row=0, column=0, pady=10)
-sleep_status = Label(sleep_frame, text="", font=("Verdana", 12), bg="lightgray")
+Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
+sleep_status = Label(sleep_frame, text="", font=("Arial", 12), bg="lightgray")
 sleep_status.grid(row=1, column=0, pady=5)
-timer_label = Label(sleep_frame, text="00:00:00", font=("Verdana", 35, "bold"), bg="lightgray")
+timer_label = Label(sleep_frame, text="00:00:00", font=("Arial", 35, "bold"), bg="lightgray")
 timer_label.grid(row=2, column=0, pady=5)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
 start_button.grid(row=3, column=0, pady=5)
@@ -541,13 +546,10 @@ history_frame.grid(row=0, column=0, sticky="nsew")
 history_table_frame = Frame(history_frame, bg="white", bd=1, relief="solid")
 history_table_frame.grid(row=1, column=0 , padx=10, pady=10, sticky="nsew")
 
-header = ["Start Time", "End Time", "Duration", "Mood"]
-for col, text in enumerate(header):
-    Label(history_table_frame, text=text, font=("Verdana", 12, "bold")).grid(row=0, column=col, padx=15)
 
 # Create a canvas for the scrollable area
-history_canvas = Canvas(history_table_frame, bg="white", width= 360, height=200)
-history_canvas.grid(row=1, column=0, columnspan=len(header), sticky="nsew")
+history_canvas = Canvas(history_table_frame, bg="white", width= 350, height=200)
+history_canvas.grid(row=1, column=0, columnspan=4, sticky="nsew")
 
 #scrollbar for the canvas
 scrollbar = Scrollbar(history_table_frame, orient="vertical", command=history_canvas.yview)
@@ -564,12 +566,12 @@ history_back_button= Button(history_frame, text="Back to Dashboard", command=sho
 history_back_button.grid(row=3, column=0, pady=5)
 
 
-#Graphs and Analysis Frame
+#Graphs and Feedback Frame
 graphs_frame = Frame(content_container, bg="lightgray")
 graphs_frame.grid(row=0, column=0, sticky="nsew")
 graphs_frame.grid_columnconfigure(0, weight=1)
 
-graphs_label = Label(graphs_frame, text="Graphs and FeedBack", font=("Verdana", 16, "bold"), bg="lightgray")
+graphs_label = Label(graphs_frame, text="Graphs and Feedback", font=("Arial", 16, "bold"), bg="lightgray")
 graphs_label.grid(row=0, column=0, pady=5) 
 
 graph_button_frame=Frame(graphs_frame, bg="lightgray")
@@ -577,14 +579,14 @@ graph_button_frame.grid(row=2, column=0, pady=5)
 Button(graph_button_frame, text="Mood Graph", command=mood_graph).grid(row=0, column=0, padx=5)
 Button(graph_button_frame, text="Sleep Graph", command=sleep_graph).grid(row=0, column=1, padx=5)
 
-Label(graphs_frame, text="Improvement:", font=("Verdana", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
+Label(graphs_frame, text="Improvement:", font=("Arial", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
 
 improvement_frame = Frame(graphs_frame, bg="white", bd=1, relief="solid")
 improvement_frame.grid(row=3, column=0, pady=5)
 
-average_label = Label(improvement_frame, text="", font=("Verdana", 14))
+average_label = Label(improvement_frame, text="", font=("Arial", 14))
 average_label.grid(row=0, column=0, pady=5)
-advices_label = Label(improvement_frame, text="", font=("Verdana", 14))
+advices_label = Label(improvement_frame, text="", font=("Arial", 14))
 advices_label.grid(row=1, column=0, pady=5)
 
 graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
