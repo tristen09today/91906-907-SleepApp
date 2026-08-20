@@ -324,14 +324,18 @@ def mood_graph():
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
-    mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
+    mood_counts = {mood: 0 for mood in MOOD_OPTIONs} #this dictionary will hold the count of each mood, and starts at 0 
 
+    #if username in histroy data, loop through the data and decrypt the mood entries and count them
     if username in sleep_history.data:
         for entry in sleep_history.data[username]:
             if entry.get("mood"):
-                mood = f.decrypt(entry["mood"].encode()).decode()
-                if mood in mood_counts:
-                    mood_counts[mood] += 1
+                 try:
+                    mood = f.decrypt(entry["mood"].encode()).decode()
+                    if mood in mood_counts: #checks if the decrypted mood is in the mood_counts dictionary  
+                        mood_counts[mood] +=1 # adds 1 to that mood
+                 except:
+                     pass
 
     #Plotting the mood graph
     plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
@@ -341,7 +345,33 @@ def mood_graph():
     plt.show()
 
 def sleep_graph():
-    return
+    """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
+    username = username_entry.get()
+    sleep_history = SleepHistory("sleep_history.json", username)
+    durations = []
+
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            try:
+                #Decrypt the duration and convert it to hours
+                duration_str = f.decrypt(entry["duration"].encode()).decode()
+                duration_parts = duration_str.split(':')
+                hours = int(duration_parts[0])
+                durations.append(hours)
+            except:
+                pass
+    #Histogram of sleep durations
+    plt.hist(durations, bins=[0, 1, 2, 3, 4, 5, 6, 7, 8], edgecolor='black', align='left')
+    plt.xticks(range(9), ['0', '1', '2', '3', '4', '5', '6', '7', '8+'])
+    plt.title(f"{username}'s Sleep Duration Distribution")
+    plt.xlabel("Hours of Sleep")
+    plt.ylabel("Count")
+    plt.show()
+                
+
+    
+
+    
 
 
 def improve_graph():
@@ -445,7 +475,7 @@ combo2.grid(row=0, column=2, padx=2)
 Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).grid(row=3, column=0, pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=4, column=0, pady=5)
 Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=5, column=0, pady=5)
-Button(dashboard_frame, text = "Graphs and Analysis", command =show_graphs).grid(row=6, column=0, pady=5)
+Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=6, column=0, pady=5)
 
 Button(dashboard_frame, text ="Logout", command=show_login).grid(row=7, column=0, pady=5)
 
