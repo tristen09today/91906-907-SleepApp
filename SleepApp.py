@@ -2,13 +2,15 @@
 This version will focus on adding more advanced features based on stakeholder feedback. These features will include feedback
 on sleep quality, a weekly sleep summary, graphs, and a active sleep timer so users can actively check how long they hae been sleeping
 In terms of complex techniques, this version will focus on Tkinter's grid geometry'''
+
+#importing libraries
 from tkinter import *
 from tkinter import ttk
 import json
 import hashlib
 from datetime import *
 from cryptography.fernet import Fernet
-import time
+import matplotlib.pyplot as plt
 
 
 
@@ -19,7 +21,7 @@ USER_FILE  ="users.json"
 MIN_PASS= 8
 MIN_USER=3
 KEY_FILE = "histroy.key"
-YEAR_LEVELS = range(1, 14)  # Year levels from 1 to 13
+YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
 MOOD_OPTIONs= ["Great", "Okay", "Tired"]
 
@@ -40,6 +42,7 @@ f = Fernet(key)
 #using inheritance to create a base class for user management and a derived class for sleep session management
 
 class JSONStore:
+    """This class is used to manage the data stored in a json file."""
     def __init__(self, filename):
         self.filename = filename
         self.data = self.load_data()
@@ -58,6 +61,7 @@ class JSONStore:
 
 #Class to manage user data, including registration and login functionality
 class UserStore:
+
     def __init__(self, filename):
         self.filename = filename
         self.users = self.load_users()
@@ -72,13 +76,17 @@ class UserStore:
             return {}
 
     def save_users(self):
+        """This function saves the user data to the json file."""
         with open(self.filename, "w") as file:
             json.dump(self.users, file, indent=4)
 
     def hash_password(self, password):
+        """This function hashes the password to make it private."""
         return hashlib.sha256(password.encode()).hexdigest()
     
     def register_user(self, username, password):
+        """Using the hash_password function, this function registers 
+        a new user by storing their username and hashed password in the users dictionary."""
         if username in self.users:
             return False  # User already exists
         self.users[username] = self.hash_password(password)
@@ -86,20 +94,22 @@ class UserStore:
         return True
 
     def login_user(self, username, password):
+        """This function checks if the username and password match the stored data."""
         hashed_password = self.hash_password(password)
         if username in self.users and self.users[username] == hashed_password:
             return True
         return False
     
-#handles each user's sleep session, also inherits from the JSONStore class to manage sleep data
 class SleepSession(JSONStore):
+    """handles each user's sleep session, also inherits from the JSONStore class to manage sleep data"""
     def __init__(self, filename, username):
         super().__init__(filename)
         self.username = username
         if username not in self.data:
             self.data[username] = []
-#JUST ADDED
+
 class SleepHistory(SleepSession):
+    """This class manages the sleep history for each user, inheriting from SleepSession."""
     def __init__(self, filename, username):
         super().__init__(filename, username)
 
@@ -107,29 +117,36 @@ class SleepHistory(SleepSession):
         self.data[self.username].append(entry)
         self.save_data()
 
-
-
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
+
+#these are the main functions to show the differnet frames
 def show_login():
+    """Brings the login frame to the front and hides other frames."""
     login_frame.tkraise()
 
 
 def show_register():
+    """Brings the register frame to the front and hides other frames."""
     register_frame.tkraise()
 
 def show_dashboard():
+    """Brings the dashboard frame to the front and hides other frames."""
     dashboard_frame.tkraise()
 
 def show_sleep():
+    """Brings the sleep session frame to the front and hides other frames."""
     sleep_frame.tkraise()
 
 def show_history():
+    """Brings the sleep history frame to the front and hides other frames."""
     history_frame.tkraise()
 
 def show_graphs():
+    """Brings the graphs and analysis frame to the front and hides other frames."""
     graphs_frame.tkraise()
+    
    
 
 
@@ -153,22 +170,26 @@ def handle_register():
     if int(year) not in YEAR_ELIGIBILITY:
         reg_message_label.config(text="You must be in year 9 to 13 to register.", fg="red")
         return
-
+    #Check if the user and pass fields are empty 
     if username == "" or password == "":
         reg_message_label.config(text="Username and password cannot be empty.", fg="red")
         return
+    #check if pass is lss than 8 characters
     if len(password) < MIN_PASS:
         reg_message_label.config(text="Password must be at least 8 characters long.", fg="red")
         return
+    #check if username is less than 3 characters
     if len(username) < MIN_USER:
         reg_message_label.config(text="Username must be at least 3 characters long.", fg="red")
         return
+    
     if user_store.register_user(username, password):
-        show_login()
+        show_login() # if registration is successful, show the login frame
         
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
-
+        
+#This function is to set the user's sleep goal and show the remaining time until when the user should go to bed
 def set_goal(goal_time):
     try:
         goal_time_obj = datetime.strptime(goal_time, "%H:%M")
@@ -184,8 +205,9 @@ def set_goal(goal_time):
     except ValueError:
         welcome.config(text="Invalid time format. Please use HH:MM.", fg="red")
   
-#This function updates the sleep timer every second while the user is sleeping
 def update_timer(sleep_time):
+    """This function updates the sleep timer every 
+    second while the user is sleeping"""
     if wake_button['state'] == NORMAL:  # Only update if the user is still sleeping
         now = datetime.now()
         duration = now - sleep_time
@@ -193,8 +215,9 @@ def update_timer(sleep_time):
         timer_label.config(text=str(duration))
         timer_label.after(1000, update_timer, sleep_time)  # Update every second
 
-#To show the starting time of the sleep session and disable the start button while enabling the wake button
 def handle_sleep():
+    """To show the starting time of the sleep session and disable 
+    the start button while enabling the wake button"""
     global sleep_time
     sleep_time = datetime.now()
     goal_time = bedtime_goalvar.get()
@@ -216,14 +239,15 @@ def handle_sleep():
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
     for button in mood_button_frame.winfo_children():
-        button.config(state=DISABLED)  # Disable mood buttons during sleep session
-        wake_button.grid()  # Show the wake button during sleep session
-        mood_button_frame.grid_remove()  # Hide the mood buttons during sleep session
-        sleep_back_button.grid_remove()  # Hide the back button during sleep session
-        update_timer(sleep_time)  # Start updating the timer
+        button.config(state=DISABLED)  
+        wake_button.grid()  
+        mood_button_frame.grid_remove()  
+        sleep_back_button.grid_remove()  
+        update_timer(sleep_time)  
     
- #To show the duration of the sleep session and enable the start button while disabling the wake button   
 def handle_wake():
+    """ To show the duration of the sleep session and enable 
+        the start button while disabling the wake button   """
     wake_time = datetime.now()
     duration = wake_time - sleep_time
     duration = duration - timedelta(microseconds=duration.microseconds)  
@@ -231,14 +255,12 @@ def handle_wake():
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
     for button in mood_button_frame.winfo_children():
-        button.config(state=NORMAL)  # Enable mood buttons after waking up
-        wake_button.grid_remove()  # Hide the wake button after waking up
-        mood_button_frame.grid()  # Show the mood buttons after waking up
-        dashboard_frame.grid()  # Show the dashboard frame after waking up
-        sleep_back_button.grid()  # Show the back button after waking up
+        button.config(state=NORMAL)  
+        wake_button.grid_remove()  
+        mood_button_frame.grid()  
+        dashboard_frame.grid()  
+        sleep_back_button.grid()  
  
-    
-
     # Save the sleep session to the user's sleep history
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
@@ -256,8 +278,9 @@ def handle_wake():
     }
     sleep_history.add_sleep_entry(encrypted_entry)
 
-# Function to handle mood selection
 def handle_mood(mood):
+    """This function handles the mood selection after waking up. It updates
+      the sleep status and saves the mood to the last sleep entry."""
     sleep_status.config(text=f"Selected mood: {mood}")
     # Save the mood to the last sleep entry
     username = username_entry.get()
@@ -270,6 +293,8 @@ def handle_mood(mood):
     
 #Function to show the user's sleep history, decrypting the sleep time.
 def show_history():
+    """This function displays the user's sleep history in a table format. It decrypts 
+    the stored sleep data and appends the history frame."""
     history_frame.tkraise()
     username = username_entry.get()
     sleep_history = SleepHistory("sleep_history.json", username)
@@ -294,6 +319,34 @@ def show_history():
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
                 Label(history_rows, text=decrypted_entry[key], font=("Arial", 11)).grid(row=sleep_history.data[username].index(entry), column=col, padx=5, pady=2)
 
+def mood_graph():
+    """This function generates a pie chart 
+    showing the distribution of moods from the user's sleep history."""
+    username = username_entry.get()
+    sleep_history = SleepHistory("sleep_history.json", username)
+    mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
+
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            if entry.get("mood"):
+                mood = f.decrypt(entry["mood"].encode()).decode()
+                if mood in mood_counts:
+                    mood_counts[mood] += 1
+
+    #Plotting the mood graph
+    plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
+    plt.title(f"{username}'s Mood Distribution")
+    plt.xlabel("Mood")
+    plt.ylabel("Count")
+    plt.show()
+
+def sleep_graph():
+    return
+
+
+def improve_graph():
+    return
+   
         
     
 #Window
@@ -464,8 +517,17 @@ history_back_button.grid(row=2, column=0, pady=5)
 #Graphs and Analysis Frame
 graphs_frame = Frame(content_container, bg="lightgray")
 graphs_frame.grid(row=0, column=0, sticky="nsew")
+graphs_frame.grid_columnconfigure(0, weight=1)
+
 graphs_label = Label(graphs_frame, text="Graphs and Analysis", font=("Arial", 16), bg="lightgray")
-graphs_label.grid(row=0, column=0, pady=10)
+graphs_label.grid(row=1, column=0, pady=5) 
+graph_button_frame=Frame(graphs_frame, bg="lightgray")
+graph_button_frame.grid(row=2, column=0, pady=5)
+Button(graph_button_frame, text="Mood Graph", command=mood_graph).grid(row=0, column=0, padx=5)
+Button(graph_button_frame, text="Sleep Graph", command=sleep_graph).grid(row=0, column=1, padx=5)
+Button(graph_button_frame, text="Improvements", command=improve_graph).grid(row=0, column=2, padx=5)
+
+
 graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
 graphs_back_button.grid(row=1, column=0, pady=5)
 
