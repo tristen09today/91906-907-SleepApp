@@ -370,9 +370,20 @@ def sleep_graph():
                 pass
     average_sleep= sum(durations) / len(durations) if durations else 0
 
+    counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
+    labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
+
+    graph_count =[]
+    graph_label=[]
+    for i in range(len(counts)):
+        if counts[i] > 0:
+            graph_count.append(counts[i]) # only append if the count is bigger than 0 
+            graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
+
     #Pie chart to show the distribution of sleep durations
-    plt.pie([durations.count(i) for i in range(1, 9)], labels=[f"{i} hours" for i in range(1, 8)] + ["8+ hours"], autopct='%1.1f%%')  # to show the percentage of each sleep duration
-    plt.title(f"{username}'s Sleep Duration Distribution (Average: {average_sleep:.2f} hours)")
+    plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
+    plt.title(f"{username}'s Sleep Duration Distribution")
+    plt.axis('equal') # so it draws a circle
     plt.show()
  
    
