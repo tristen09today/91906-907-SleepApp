@@ -135,6 +135,39 @@ class SleepAnalysis(SleepSession):
 class SleepGraph(SleepAnalysis):
     def create_graph(self):
         pass    
+class MoodGraph(SleepGraph):
+    def create_graph(self):
+        mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
+        for mood in self.get_mood():
+            if mood in mood_counts:
+                mood_counts[mood] += 1
+        plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
+        plt.title(f"{self.username}'s Mood Distribution")
+        plt.xlabel("Mood")
+        plt.ylabel("Count")
+        plt.show()
+
+class DurationGraph(SleepGraph):
+    def create_graph(self):
+        durations = []
+        for duration in self.get_duration():
+            hours = int(duration)
+            if hours >= 8:
+                durations.append(8)  # Cap the duration at 8 hours for the graph
+            else:
+                durations.append(hours)
+        counts = [durations.count(i) for i in range(0, 9)]
+        labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"]
+        graph_count = []
+        graph_label = []
+        for i in range(len(counts)):
+            if counts[i] > 0:
+                graph_count.append(counts[i])
+                graph_label.append(labels[i])
+        plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
+        plt.title(f"{self.username}'s Sleep Duration Distribution")
+        plt.axis('equal')
+        plt.show()
 
         
 
