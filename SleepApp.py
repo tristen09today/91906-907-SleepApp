@@ -384,63 +384,14 @@ def mood_graph():
     """This function generates a pie chart 
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
-    mood_counts = {mood: 0 for mood in MOOD_OPTIONs} #this dictionary will hold the count of each mood, and starts at 0 
-
-    #if username in histroy data, loop through the data and decrypt the mood entries and count them
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            if entry.get("mood"):
-                 try:
-                    mood = f.decrypt(entry["mood"].encode()).decode()
-                    if mood in mood_counts: #checks if the decrypted mood is in the mood_counts dictionary  
-                        mood_counts[mood] +=1 # adds 1 to that mood
-                 except:
-                     pass
-
-    #Plotting the mood graph
-    plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
-    plt.title(f"{username}'s Mood Distribution")
-    plt.xlabel("Mood")
-    plt.ylabel("Count")
-    plt.show()
-
+    mood_analysis = MoodGraph("sleep_history.json", username)
+    mood_analysis.create_graph()
+    
 def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
-    durations = []
-
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            try:
-                #Decrypt the duration and convert it to hours
-                duration_str = f.decrypt(entry["duration"].encode()).decode()
-                duration_parts = duration_str.split(':')
-                hours = int(duration_parts[0])
-                if hours >= 8:
-                    durations.append(8)  # Cap the duration at 8 hours for the graph
-                durations.append(hours)
-            except:
-                pass
-
-    counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
-    labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
-
-    graph_count =[]
-    graph_label=[]
-    for i in range(len(counts)):
-        if counts[i] > 0:
-            graph_count.append(counts[i]) # only append if the count is bigger than 0 
-            graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
-
-    #Pie chart to show the distribution of sleep durations
-    plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
-    plt.title(f"{username}'s Sleep Duration Distribution")
-    plt.axis('equal') # so it draws a circle
-    plt.show()
- 
-   
+    duration_analysis = DurationGraph("sleep_history.json", username)
+    duration_analysis.create_graph()
 
 def improvements():
     username = username_entry.get()
