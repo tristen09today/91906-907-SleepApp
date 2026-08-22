@@ -58,27 +58,13 @@ class JSONStore:
     def save_data(self):
         with open(self.filename, "w") as file:
             json.dump(self.data, file, indent=4)
-
-#Class to manage user data, including registration and login functionality
+#class to manage user registration and login
 class UserStore(JSONStore):
 
     def __init__(self, filename):
-        self.filename = filename
-        self.users = self.load_users()
-
-  
-    def load_users(self):
-        """This function loads the user data from the json file."""
-        try:
-            with open(self.filename, "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
-
-    def save_users(self):
-        """This function saves the user data to the json file."""
-        with open(self.filename, "w") as file:
-            json.dump(self.users, file, indent=4)
+        super().__init__(filename)
+        self.users = self.data
+       
 
     def hash_password(self, password):
         """This function hashes the password to make it private."""
