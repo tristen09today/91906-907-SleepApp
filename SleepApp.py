@@ -18,9 +18,10 @@ import matplotlib.pyplot as plt
 #CONSTANTS  
 #Constant for creating a json file to store the user data
 USER_FILE  ="users.json"
+KEY_FILE = "histroy.key"
+HISTORY_FILE = "sleep_history.json"
 MIN_PASS= 8
 MIN_USER=3
-KEY_FILE = "histroy.key"
 YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
 MOOD_OPTIONs= ["Great", "Okay", "Tired"]
@@ -200,10 +201,6 @@ def show_sleep():
     """Brings the sleep session frame to the front and hides other frames."""
     sleep_frame.tkraise()
 
-def show_history():
-    """Brings the sleep history frame to the front and hides other frames."""
-    history_frame.tkraise()
-
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
     graphs_frame.tkraise()
@@ -325,7 +322,7 @@ def handle_wake():
  
     # Save the sleep session to the user's sleep history
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
+    sleep_history = SleepHistory("HISTORY_FILE", username)
     sleep_entry = {
         "start_time": sleep_time.strftime('%Y-%m-%d %H:%M:%S'),
         "end_time": wake_time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -347,10 +344,10 @@ def handle_mood(mood):
     sleep_status.config(text=f"Selected mood: {mood}")
     # Save the mood to the last sleep entry
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
+    sleep_history = SleepHistory("HISTORY_FILE", username)
     if username in sleep_history.data and sleep_history.data[username]:
         last_entry = sleep_history.data[username][-1]
-        last_entry["mood"] = f.encrypt(mood.encode()).decode()
+        last_entry["mood"] = sleep_history.decrypt_value(mood.encode()).decode()
         sleep_history.save_data()    
     
     
@@ -360,7 +357,7 @@ def show_history():
     the stored sleep data and appends the history frame."""
     history_frame.tkraise()
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
+    sleep_history = SleepHistory("HISTORY_FILE", username)
    
     for widget in history_rows.winfo_children():
         widget.destroy()  # Clear previous history entries
@@ -378,11 +375,12 @@ def show_history():
                 mood = "Not-recorded"
         
             decrypted_entry = {
-                "start_time": f.decrypt(entry["start_time"].encode()).decode(),
-                "end_time": f.decrypt(entry["end_time"].encode()).decode(),
-                "duration": f.decrypt(entry["duration"].encode()).decode(),
+                "start_time": sleep_history.decrypt_value(entry, "start_time"),
+                "end_time": sleep_history.decrypt_value(entry, "end_time"),
+                "duration": sleep_history.decrypt_value(entry, "duration"),
                 "mood": mood
             }
+                
 
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
                 Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
@@ -391,18 +389,18 @@ def mood_graph():
     """This function generates a pie chart 
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
-    mood_analysis = MoodGraph("sleep_history.json", username)
+    mood_analysis = MoodGraph("HISTORY_FILE", username)
     mood_analysis.create_graph()
     
 def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
-    duration_analysis = DurationGraph("sleep_history.json", username)
+    duration_analysis = DurationGraph("HISTORY_FILE", username)
     duration_analysis.create_graph()
 
 def improvements():
     username = username_entry.get()
-    sleep_analysis = SleepAnalysis("sleep_history.json", username)
+    sleep_analysis = SleepAnalysis("HISTORY_FILE", username)
     durations = sleep_analysis.get_duration()
 
     if durations:
