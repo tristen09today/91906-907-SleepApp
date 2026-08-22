@@ -395,19 +395,9 @@ def sleep_graph():
 
 def improvements():
     username = username_entry.get()
-    sleep_history = SleepHistory("sleep_history.json", username)
-    durations = []
-
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            try:
-                #Decrypt the duration and convert it to hours
-                duration_str = f.decrypt(entry["duration"].encode()).decode()
-                duration_parts = duration_str.split(':')
-                hours = int(duration_parts[0])
-                durations.append(hours)
-            except:
-                pass
+    sleep_analysis = SleepAnalysis("sleep_history.json", username)
+    durations = sleep_analysis.get_duration()
+    
     if durations:
         average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
