@@ -1,7 +1,7 @@
-''' This is Version 3 of the code for my Sleep App.
-This version will focus on adding more advanced features based on stakeholder feedback. These features will include feedback
-on sleep quality, a weekly sleep summary, graphs, and a active sleep timer so users can actively check how long they hae been sleeping
-In terms of complex techniques, this version will focus on Tkinter's grid geometry'''
+''' This is Version 4 of the code for my Sleep App.
+This version will focus on improving the sleep goal system, the ability to delete incorrect sleep recors, 
+a journalling systyem using complex techniques, bedtime reminders, and improvements to the interface such as icons and clearer layouts
+The program will also have more classes to reduce clutter and repetition in the code. Implementing Classes, inheritance and polymorphism. '''
 
 #importing libraries
 from tkinter import *
@@ -60,7 +60,7 @@ class JSONStore:
             json.dump(self.data, file, indent=4)
 
 #Class to manage user data, including registration and login functionality
-class UserStore:
+class UserStore(JSONStore):
 
     def __init__(self, filename):
         self.filename = filename
