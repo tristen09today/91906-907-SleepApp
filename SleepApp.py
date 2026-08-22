@@ -76,7 +76,7 @@ class UserStore(JSONStore):
         if username in self.users:
             return False  # User already exists
         self.users[username] = self.hash_password(password)
-        self.save_users()
+        self.save_data()
         return True
 
     def login_user(self, username, password):
@@ -91,8 +91,20 @@ class SleepSession(JSONStore):
     def __init__(self, filename, username):
         super().__init__(filename)
         self.username = username
+
         if username not in self.data:
             self.data[username] = []
+    
+    def encrypt_value(self, entry, key):
+        """This function encrypts the value of a given key in the entry dictionary."""
+        if key in entry:
+            return f.encrypt(entry[key].encode()).decode()
+        return None
+    def decrypt_value(self, entry, key):
+        """This function decrypts the value of a given key in the entry dictionary."""
+        if key in entry:
+            return f.decrypt(entry[key].encode()).decode()
+        return None
 
 class SleepHistory(SleepSession):
     """This class manages the sleep history for each user, inheriting from SleepSession."""
@@ -107,14 +119,8 @@ class SleepHistory(SleepSession):
 class SleepAnalysis(SleepSession):
     def __init__(self, filename, username):
         super().__init__(filename, username)
-        def decrypt_value(self, entry, key):
-            try:
-                if entry.get(key):
-                    return f.decrypt(entry[key].encode()).decode()
-            except:
-                return None
-            
-        def get_duration(self):
+  
+    def get_duration(self):
             durations = []
             for entry in self.data[self.username]:
                 duration_str = self.decrypt_value(entry, "duration")
@@ -123,7 +129,7 @@ class SleepAnalysis(SleepSession):
                     hours = int(duration_parts[0])
                     durations.append(hours)
             return durations
-        def get_mood(self):
+    def get_mood(self):
             moods = []
             for entry in self.data[self.username]:
                 mood = self.decrypt_value(entry, "mood")
@@ -327,11 +333,12 @@ def handle_wake():
     }
   
     encrypted_entry = {
-        "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
-        "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
-        "duration": f.encrypt(sleep_entry["duration"].encode()).decode(),
-        "mood": f.encrypt(sleep_entry.get("mood").encode()).decode() if "mood" in sleep_entry else ""
+        "start_time": sleep_history.encrypt_value(sleep_entry, "start_time"),
+        "end_time": sleep_history.encrypt_value(sleep_entry, "end_time"),
+        "duration": sleep_history.encrypt_value(sleep_entry, "duration"),
+        "mood":"" 
     }
+
     sleep_history.add_sleep_entry(encrypted_entry)
 
 def handle_mood(mood):
@@ -397,7 +404,7 @@ def improvements():
     username = username_entry.get()
     sleep_analysis = SleepAnalysis("sleep_history.json", username)
     durations = sleep_analysis.get_duration()
-    
+
     if durations:
         average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
