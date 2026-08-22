@@ -103,6 +103,36 @@ class SleepHistory(SleepSession):
         self.data[self.username].append(entry)
         self.save_data()
 
+#This class is used to analyze the user's sleep history, inheriting from SleepSession
+class SleepAnalysis(SleepSession):
+    def __init__(self, filename, username):
+        super().__init__(filename, username)
+        def decrypt_value(self, entry, key):
+            try:
+                if entry.get(key):
+                    return f.decrypt(entry[key].encode()).decode()
+            except:
+                return None
+            
+        def get_duration(self):
+            durations = []
+            for entry in self.data[self.username]:
+                duration_str = self.decrypt_value(entry, "duration")
+                if duration_str:
+                    duration_parts = duration_str.split(':')
+                    hours = int(duration_parts[0])
+                    durations.append(hours)
+            return durations
+        def get_mood(self):
+            moods = []
+            for entry in self.data[self.username]:
+                mood = self.decrypt_value(entry, "mood")
+                if mood:
+                    moods.append(mood)
+            return moods
+        
+           
+
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
