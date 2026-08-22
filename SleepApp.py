@@ -131,7 +131,13 @@ class SleepAnalysis(SleepSession):
                     moods.append(mood)
             return moods
         
-           
+#Using polymoprphism 
+class SleepGraph(SleepAnalysis):
+    def create_graph(self):
+        pass    
+
+        
+
 
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
