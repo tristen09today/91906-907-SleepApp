@@ -368,7 +368,6 @@ def sleep_graph():
                 durations.append(hours)
             except:
                 pass
-    average_sleep= sum(durations) / len(durations) if durations else 0
 
     counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
     labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
@@ -404,22 +403,25 @@ def improvements():
             except:
                 pass
     if durations:
-        average= sum(durations) / len(durations)
+        average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
 
-        if average < 7:
+        if average < 7: # if average is less than 7 hours, give advice to get more sleep
             advice = "Try get more sleep each night."
-        else:
+        else: #else give advice that the user is getting enough sleep
             advice = "Great job! You are getting enough sleep."
 
         advices_label.config(text=advice)
+
+    else:
+        average_label.config(text="No sleep data available.", fg="black")
+        advices_label.config(text="Complete a session.", fg="black")
+
     
  
 
-   
- 
 
-    
+
 #Window
 
 window=Tk()
@@ -493,7 +495,6 @@ dashboard_frame.grid(row=0, column=0, sticky="nsew")
 dashboard_frame.grid_columnconfigure(0, weight=1)
 welcome = Label(dashboard_frame, text="", font=("arial", 13), bg="lightblue")
 welcome.grid(row=0, column=0, pady=10)
-
 
 
 #Dropdown values
@@ -593,7 +594,7 @@ Button(graph_button_frame, text="Sleep Graph", command=sleep_graph).grid(row=0, 
 Label(graphs_frame, text="Improvement:", font=("Arial", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
 
 improvement_frame = Frame(graphs_frame, bg="white", bd=1, relief="solid")
-improvement_frame.grid(row=3, column=0, pady=5)
+improvement_frame.grid(row=4, column=0, pady=5)
 
 average_label = Label(improvement_frame, text="", font=("Arial", 14))
 average_label.grid(row=0, column=0, pady=5)
@@ -601,10 +602,12 @@ advices_label = Label(improvement_frame, text="", font=("Arial", 14))
 advices_label.grid(row=1, column=0, pady=5)
 
 graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
-graphs_back_button.grid(row=4, column=0, pady=5)
+graphs_back_button.grid(row=5, column=0, pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
+
+
 
 
 #This is to  
