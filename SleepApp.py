@@ -113,8 +113,17 @@ class SleepHistory(SleepSession):
         super().__init__(filename, username)
 
     def add_sleep_entry(self, entry):
+        """This function adds a new sleep entry to the user's sleep history."""
+        encrypted_entry = {
+            key: self.encrypt_value(entry, key) 
+                           for key in entry} #loops through the keys and calls the encryption method
+        encrypted_entry["mood"]=""
+            
         self.data[self.username].append(entry)
         self.save_data()
+       
+         
+        
 
 #This class is used to analyze the user's sleep history, inheriting from SleepSession
 class SleepAnalysis(SleepSession):
