@@ -260,20 +260,28 @@ def handle_register():
         
 #This function is to set the user's sleep goal and show the remaining time until when the user should go to bed
 def set_goal(goal_time):
-    try:
-        goal_time_obj = datetime.strptime(goal_time, "%H:%M")
-        bedtime_goalvar.set(goal_time)
-        now = datetime.now()
-        goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
-        if goal_datetime < now:
-            goal_datetime += timedelta(days=1)  # Set to next day if the time has already passed
-        time_until_goal = goal_datetime - now
-        hours, remainder = divmod(time_until_goal.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        welcome.config(text=f"Time until bedtime: {hours}h {minutes}m {seconds}s", fg="blue")
-    except ValueError:
-        welcome.config(text="Invalid time format. Please use HH:MM.", fg="red")
-  
+    """Sets the user's chosen bedtime goal """
+    bedtime_goalvar.set(goal_time)
+
+def update_bedtime_timer():
+        goal_time = bedtime_goalvar.get()
+        if goal_time != "":
+            goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
+            now = datetime.now()
+
+            goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
+       
+            if goal_datetime<now:
+                goal_datetime += timedelta(days=1)  # If the goal time is earlier than now, assume it's for the next day
+
+            time_remaining = goal_datetime - now
+            total_seconds = int(time_remaining.total_seconds())
+            hours= total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            welcome.config(text=f"Time until bedtime goal: {hours:02d}:{minutes:02d}:{seconds:02d}", fg="blue")
+        window.after(1, update_bedtime_timer)  # Update every second
+         
 def update_timer(sleep_time):
     """This function updates the sleep timer every 
     second while the user is sleeping"""
@@ -291,7 +299,7 @@ def handle_sleep():
     sleep_time = datetime.now()
     goal_time = bedtime_goalvar.get()
     if goal_time != "":
-        goal_time_obj = datetime.strptime(goal_time, "%H:%M")
+        goal_time_obj = datetime.strptime(goal_time, "%I%M%p")
         goal_datetime = sleep_time.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
 
         #If the goal time is earlier than the current time, assume it's for the next day
@@ -417,7 +425,7 @@ def improvements():
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")
         if average <7:  # if average is less than 7 hours, give advice to get more sleep
             advice = "Try to get more sleep each night."
-            
+
         else: #else give advice that the user is getting enough sleep
             advice = "Great job! You are getting enough sleep."
 
@@ -443,8 +451,9 @@ window.geometry("400x350")
 
 
 #Dropdown variables
-hour_var = StringVar(value="12")
+hour_var = StringVar(value="10")
 minute_var = StringVar(value="00")
+ampm_var = StringVar(value="PM")
 bedtime_goalvar = StringVar(value="")
 
 
@@ -508,12 +517,13 @@ welcome.grid(row=0, column=0, pady=10)
 
 
 #Dropdown values
-hours = [f"{i:02d}" for i in range(24)]
+hours = [f"{i:02d}" for i in range(1,13)]
 minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
+ampm= ["AM", "PM"]
 
 
 #Layout
-Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").grid(row=1, column=0, pady=5)
+Label(dashboard_frame, text="Set Bedtime Target:", bg="lightblue").grid(row=1, column=0, pady=5)
 
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
@@ -523,8 +533,10 @@ combo.grid(row=0, column=0, padx=2)
 Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=1, padx=2)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
+combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
+combo3.grid(row=0, column=3, padx=2)
 
-Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).grid(row=3, column=0, pady=5)
+Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=3, column=0, pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=4, column=0, pady=5)
 Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=5, column=0, pady=5)
 Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=6, column=0, pady=5)
@@ -618,7 +630,7 @@ graphs_back_button.grid(row=5, column=0, pady=5)
 login_frame.tkraise()
 
 
-
+update_bedtime_timer()  
 
 #This is to  
 window.mainloop()
