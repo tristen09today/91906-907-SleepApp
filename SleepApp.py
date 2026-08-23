@@ -439,10 +439,14 @@ def show_history():
                 "duration": sleep_history.decrypt_value(entry["duration"]),
                 "mood": mood
             }
-            
-
             history_table.insert("", "end", iid=index, 
-            values=(decrypted_entry["start_time"], decrypted_entry["end_time"], decrypted_entry["duration"], mood))
+            values=(
+                decrypted_entry["start_time"],
+                decrypted_entry["end_time"], 
+                decrypted_entry["duration"],
+                 mood
+                 )
+            )
 
 
 def delete_entry():
@@ -499,6 +503,8 @@ window.geometry("470x400")
 
 
 #Tkinter Variables
+style = ttk.Style()
+style.configure("Treeview", font=("Arial", 10), rowheight=25)
 
 
 #Dropdown variables
@@ -644,6 +650,7 @@ Label(history_frame, text="Sleep History", font=("Arial", 16, "bold"), bg="light
 
 #TreeView Table
 #instead of using a frame to display the sleep history, I will use a treeview table to make it easier to read and scroll through the history
+
 columns = ("start_time", "end_time", "duration", "mood") 
 history_table = ttk.Treeview(history_frame, columns=columns, show="headings", height=8) #
 for column in columns:
