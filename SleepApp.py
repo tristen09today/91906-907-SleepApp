@@ -11,8 +11,7 @@ import hashlib
 from datetime import *
 from cryptography.fernet import Fernet
 import matplotlib.pyplot as plt
-
-
+from tkinter import messagebox
 
 
 #CONSTANTS  
@@ -110,6 +109,13 @@ class SleepHistory(SleepSession):
     def add_sleep_entry(self, entry):
         self.data[self.username].append(entry)
         self.save_data()
+    def delete_sleep_entry(self, index):
+        """This function deletes one sleep record ."""
+        if 0 <= index < len(self.data[self.username]):
+            del self.data[self.username][index]
+            self.save_data()
+            return True
+        return False
 class SleepAnalysis(SleepSession):
     """This class gets data from the user's sleep history for analysis"""
     def get_duration(self):
@@ -385,7 +391,7 @@ def show_history():
     for widget in history_rows.winfo_children():
         widget.destroy()  # Clear previous history entries
 
-    header = ["Start Time", "End Time", "Duration", "Mood"]
+    header = ["Start Time", "End Time", "Duration", "Mood", "Delete"]
     for col, text in enumerate(header):
          Label(history_rows, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=15)
 
@@ -406,7 +412,19 @@ def show_history():
 
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
                 Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
+            Button(history_rows, text="Delete", command=lambda r=sleep_history.data[username].index(entry): delete_entry(r)).grid(row=sleep_history.data[username].index(entry) + 1, column=4, padx=5, pady=2)
 
+
+def delete_entry(index):
+    """This function deletes a sleep entry from the user's sleep history."""
+    answer = messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
+    if answer:
+        username = username_entry.get()
+        sleep_history = SleepHistory(HISTORY_FILE, username)
+        sleep_history.delete_sleep_entry(index)
+        show_history()  # Refresh the history display after deletion
+            
+            
 def mood_graph():
     """This function generates a pie chart 
     showing the distribution of moods from the user's sleep history."""
@@ -592,12 +610,12 @@ history_table_frame.grid(row=1, column=0 , padx=10, pady=10, sticky="nsew")
 
 
 # Create a canvas for the scrollable area
-history_canvas = Canvas(history_table_frame, bg="white", width= 350, height=200)
-history_canvas.grid(row=1, column=0, columnspan=4, sticky="nsew")
+history_canvas = Canvas(history_table_frame, bg="white", width= 450, height=200)
+history_canvas.grid(row=1, column=0, columnspan=5, sticky="nsew")
 
 #scrollbar for the canvas
 scrollbar = Scrollbar(history_table_frame, orient="vertical", command=history_canvas.yview)
-scrollbar.grid(row=1, column=4, sticky="ns")
+scrollbar.grid(row=1, column=5, sticky="ns")
 history_canvas.configure(yscrollcommand=scrollbar.set)
 
 history_rows = Frame(history_canvas, bg="white")
