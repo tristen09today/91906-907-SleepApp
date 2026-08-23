@@ -111,11 +111,20 @@ class SleepHistory(SleepSession):
         self.save_data()
     def delete_sleep_entry(self, index):
         """This function deletes one sleep record ."""
-        if 0 <= index < len(self.data[self.username]):
+        if 0 <= index < len(self.data[self.username]): # Check if the index is valid
             del self.data[self.username][index]
             self.save_data()
             return True
         return False
+class SleepJournal(SleepHistory):
+    """This class manages journal notes for each user's sleep records inheriting from SleepHistory."""
+    def add_note(self, note):
+        if self.data[self.username]:
+            self.data[self.username][-1]["note"] = self.encrypt_value(note)
+            self.save_data()
+            return True
+        return False
+
 class SleepAnalysis(SleepSession):
     """This class gets data from the user's sleep history for analysis"""
     def get_duration(self):
@@ -162,19 +171,25 @@ class MoodGraph(SleepGraph):
         for mood in self.get_mood():
             if mood in mood_counts:
                 mood_counts[mood] += 1
-            plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
-            plt.title(f"{self.username}'s Mood Distribution")
-            plt.xlabel("Mood")
-            plt.ylabel("Count")
-            plt.show()
+        plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
+        plt.title(f"{self.username}'s Mood Distribution")
+        plt.xlabel("Mood")
+        plt.ylabel("Count")
+        plt.show()
 
 class DurationGraph(SleepGraph):
     """This class creates a pie chart showing the distribution of sleep durations
       from the user's sleep history."""
     def create_graph(self):
         durations = self.get_duration()
-        counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
-        labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
+        graph_duration=[]
+        for hour in durations:
+            if hour >= 8:
+                graph_duration.append(8)  # Group all durations of 8 hours or more into the "8+ hours" category
+            else:
+                graph_duration.append(hour)
+        counts = [graph_duration.count(i) for i in range(9)]  # Count occurrences of each duration from 0 to 8
+        labels = [f"{i} hours" for i in range(8)] + ["8+ hours"] # Create labels for the pie chart
 
         graph_count =[]
         graph_label=[]
@@ -333,6 +348,19 @@ def handle_sleep():
         mood_button_frame.grid_remove()  
         sleep_back_button.grid_remove()  
         update_timer(sleep_time)  
+     
+def handle_note(note):
+    """This function handles the note input after waking up. It updates
+      the sleep status and saves the note to the last sleep entry."""
+    note = journal_text.get("1.0", END).strip()  # Get the note from the Text widget
+    if note == "":
+        messagebox.showwarning("Empty Note", "Please enter a note before saving.")
+        return
+    username= username_entry.get()
+    sleep_journal = SleepJournal(HISTORY_FILE, username)
+    if sleep_journal.add_note(note):
+        messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
+        journal_text.delete("1.0", END)  # Clear the Text widget after saving
     
 def handle_wake():
     """ To show the duration of the sleep session and enable 
@@ -363,7 +391,8 @@ def handle_wake():
         "start_time":sleep_history.encrypt_value(sleep_entry["start_time"]),
         "end_time": sleep_history.encrypt_value(sleep_entry["end_time"]),
         "duration": sleep_history.encrypt_value(sleep_entry["duration"]),
-        "mood": ""
+        "mood": "",
+        "note": ""
     }
     sleep_history.add_sleep_entry(encrypted_entry)
 
@@ -377,9 +406,13 @@ def handle_mood(mood):
     if username in sleep_history.data and sleep_history.data[username]:
         last_entry = sleep_history.data[username][-1]
         last_entry["mood"] = sleep_history.encrypt_value(mood)  # Encrypt the mood before saving  
-        sleep_history.save_data()    
+        sleep_history.save_data() 
+        mood_button_frame.grid_remove()  # Hide the mood button frame after selection
+        journal_frame.grid()  # Show the journaling frame after mood selection 
     
-    
+
+
+
 #Function to show the user's sleep history, decrypting the sleep time.
 def show_history():
     """This function displays the user's sleep history in a table format. It decrypts 
@@ -402,17 +435,20 @@ def show_history():
                 mood = sleep_history.decrypt_value(entry["mood"])
             else:
                 mood = "Not-recorded"
-        
+            #to decrypt the sleep history and display it in a table format
             decrypted_entry = {
                 "start_time":sleep_history.decrypt_value(entry["start_time"]),
                 "end_time": sleep_history.decrypt_value(entry["end_time"]),
                 "duration": sleep_history.decrypt_value(entry["duration"]),
                 "mood": mood
             }
-
+            #for loop to display the decrypted sleep history in a table format
             for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
                 Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
-            Button(history_rows, text="Delete", command=lambda r=sleep_history.data[username].index(entry): delete_entry(r)).grid(row=sleep_history.data[username].index(entry) + 1, column=4, padx=5, pady=2)
+
+            #Button to delete the entry, running the delete_entry function
+            Button(history_rows, text="Delete", font =("Arial", 8), command=lambda r=sleep_history.data[username].index(entry): 
+                   delete_entry(r)).grid(row=sleep_history.data[username].index(entry) + 1, column=4, padx=5, pady=2)
 
 
 def delete_entry(index):
@@ -457,18 +493,13 @@ def improvements():
 
     else:
         average_label.config(text="No sleep data available.", fg="black")
-        advices_label.config(text="Complete a session.", fg="black")
-
-    
+        advices_label.config(text="Complete a session.", fg="black") 
  
-
-
-
 #Window
 
 window=Tk()
 window.title("sleep app")
-window.geometry("400x350")
+window.geometry("470x400")
 
 
 #Tkinter Variables
@@ -563,12 +594,10 @@ combo2.grid(row=0, column=2, padx=2)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
 combo3.grid(row=0, column=3, padx=2)
 
-
 Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=4, column=0, pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=5, column=0, pady=5)
 Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=6, column=0, pady=5)
 Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=7, column=0, pady=5)
-
 Button(dashboard_frame, text ="Logout", command=show_login).grid(row=8, column=0, pady=5)
 
 
@@ -586,7 +615,15 @@ start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, wid
 start_button.grid(row=3, column=0, pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
 wake_button.grid(row=4, column=0, pady=5)
-
+#Journaling Frame
+journal_frame = Frame(sleep_frame, bg="lightgray")
+journal_frame.grid(row=5, column=0, pady=5)
+Label(journal_frame, text="Add a Note:", font=("Arial", 12), bg="lightgray").grid(row=0, column=0, pady=5)
+journal_text = Text(journal_frame, width=40, height=5)
+journal_text.grid(row=1, column=0, pady=5)
+save_note_button = Button(journal_frame, text="Save Note", command=handle_note)
+save_note_button.grid(row=2, column=0, pady=5)
+journal_frame.grid_remove()  # Hide the journaling frame initially
 
 #Mood Check in 
 mood_button_frame = Frame(sleep_frame, bg="lightgray")
@@ -610,7 +647,7 @@ history_table_frame.grid(row=1, column=0 , padx=10, pady=10, sticky="nsew")
 
 
 # Create a canvas for the scrollable area
-history_canvas = Canvas(history_table_frame, bg="white", width= 450, height=200)
+history_canvas = Canvas(history_table_frame, bg="white", width= 430, height=200)
 history_canvas.grid(row=1, column=0, columnspan=5, sticky="nsew")
 
 #scrollbar for the canvas
