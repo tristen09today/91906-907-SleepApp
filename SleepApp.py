@@ -110,7 +110,21 @@ class SleepHistory(SleepSession):
     def add_sleep_entry(self, entry):
         self.data[self.username].append(entry)
         self.save_data()
-
+class SleepAnalysis(SleepSession):
+    """This class gets data from the user's sleep history for analysis"""
+    def get_duration(self):
+        """This function retrieves the sleep durations from the user's sleep history."""
+        durations = []
+        for entry in self.data[self.username]:
+            try:
+                duration_str = self.decrypt_value(entry["duration"])
+                duration_parts = duration_str.split(':')
+                hours = int(duration_parts[0])
+                durations.append(hours)
+            except:
+                pass
+        return durations
+    
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
@@ -266,10 +280,10 @@ def handle_wake():
     }
   
     encrypted_entry = {
-        "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
-        "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
-        "duration": f.encrypt(sleep_entry["duration"].encode()).decode(),
-        "mood": f.encrypt(sleep_entry.get("mood").encode()).decode() if "mood" in sleep_entry else ""
+        "start_time":sleep_history.encrypt_value(sleep_entry["start_time"]),
+        "end_time": sleep_history.encrypt_value(sleep_entry["end_time"]),
+        "duration": sleep_history.encrypt_value(sleep_entry["duration"]),
+        "mood": ""
     }
     sleep_history.add_sleep_entry(encrypted_entry)
 
@@ -331,7 +345,7 @@ def mood_graph():
         for entry in sleep_history.data[username]:
             if entry.get("mood"):
                  try:
-                    mood = f.decrypt(entry["mood"].encode()).decode()
+                    mood = sleep_history.decrypt_value(entry["mood"]) #decrypt the mood entry
                     if mood in mood_counts: #checks if the decrypted mood is in the mood_counts dictionary  
                         mood_counts[mood] +=1 # adds 1 to that mood
                  except:
@@ -348,21 +362,8 @@ def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
-    durations = []
-
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            try:
-                #Decrypt the duration and convert it to hours
-                duration_str = f.decrypt(entry["duration"].encode()).decode()
-                duration_parts = duration_str.split(':')
-                hours = int(duration_parts[0])
-                if hours >= 8:
-                    durations.append(8)  # Cap the duration at 8 hours for the graph
-                durations.append(hours)
-            except:
-                pass
-
+    durations = sleep_history.get_duration()  # Get the list of sleep durations
+    
     counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
     labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
 
@@ -384,18 +385,8 @@ def sleep_graph():
 def improvements():
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
-    durations = []
+    durations = sleep_history.get_duration()  # Get the list of sleep durations
 
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            try:
-                #Decrypt the duration and convert it to hours
-                duration_str = f.decrypt(entry["duration"].encode()).decode()
-                duration_parts = duration_str.split(':')
-                hours = int(duration_parts[0])
-                durations.append(hours)
-            except:
-                pass
     if durations:
         average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
