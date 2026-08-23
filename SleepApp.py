@@ -18,10 +18,10 @@ import matplotlib.pyplot as plt
 #CONSTANTS  
 #Constant for creating a json file to store the user data
 USER_FILE  ="users.json"
-KEY_FILE = "histroy.key"
-HISTORY_FILE = "sleep_history.json"
 MIN_PASS= 8
 MIN_USER=3
+KEY_FILE = "histroy.key"
+HISTORY_FILE = "sleep_history.json"
 YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
 MOOD_OPTIONs= ["Great", "Okay", "Tired"]
@@ -59,13 +59,15 @@ class JSONStore:
     def save_data(self):
         with open(self.filename, "w") as file:
             json.dump(self.data, file, indent=4)
-#class to manage user registration and login
+
+#Class to manage user data, including registration and login functionality
 class UserStore(JSONStore):
+    """This class manages user data, including registration and login functionality. It inherits
+     from the JSONStore class to handle data storage as it caries the load and save_data already."""
 
     def __init__(self, filename):
         super().__init__(filename)
         self.users = self.data
-       
 
     def hash_password(self, password):
         """This function hashes the password to make it private."""
@@ -94,106 +96,20 @@ class SleepSession(JSONStore):
         self.username = username
         if username not in self.data:
             self.data[username] = []
+
+    def encrypt_value(self, value):
+        """This function encrypts a given value using Fernet encryption."""
+        return f.encrypt(value.encode()).decode()
     
-    def encrypt_value(self, entry, key):
-        """This function encrypts the value of a given key in the entry dictionary."""
-        if key in entry:
-            return f.encrypt(entry[key].encode()).decode()
-        return None
-    def decrypt_value(self, entry, key):
-        """This function decrypts the value of a given key in the entry dictionary."""
-        if key in entry:
-            return f.decrypt(entry[key].encode()).decode()
-        return None
+    def decrypt_value(self, value):
+        """This function decrypts a given value using Fernet decryption."""
+        return f.decrypt(value.encode()).decode()
 
 class SleepHistory(SleepSession):
     """This class manages the sleep history for each user, inheriting from SleepSession."""
     def add_sleep_entry(self, entry):
-        """This function adds a new sleep entry to the user's sleep history."""
-        encrypted_entry = {}
-        for key in entry: #checks all keys and encrypts before saving to the json file
-            encrypted_entry[key] = self.encrypt_value(entry, key)
-        self.data[self.username].append(encrypted_entry)
+        self.data[self.username].append(entry)
         self.save_data()
-
-    def get_sleep_history(self):
-        """This function retrieves the user's sleep history, decrypting the stored data."""
-        decrypted_history = []
-        for entry in self.data[self.username]:
-            decrypted_entry = {}
-            for key in entry:
-                decrypted_entry[key] = self.decrypt_value(entry, key)
-            if "mood" not in decrypted_entry:
-                decrypted_entry["mood"] = "Not recorded"   
-            decrypted_history.append(decrypted_entry)
-        return decrypted_history
-
-#This class is used to analyze the user's sleep history, inheriting from SleepSession
-class SleepAnalysis(SleepSession):
-    def get_duration(self):
-            durations = []
-            for entry in self.data[self.username]:
-                duration_str = self.decrypt_value(entry, "duration")
-                if duration_str:
-                    duration_parts = duration_str.split(':')
-                    hours = int(duration_parts[0])
-                    durations.append(hours)
-            return durations
-    def get_mood(self):
-            moods = []
-            for entry in self.data[self.username]:
-                mood = self.decrypt_value(entry, "mood")
-                if mood:
-                    moods.append(mood)
-            return moods
-        
-
-
-#Using polymoprphism to create different types of graphs for sleep analysis
-class SleepGraph(SleepAnalysis):
-    def create_graph(self):
-        pass  
-  
-class MoodGraph(SleepGraph):
-    """This class creates a bar graph showing the distribution of moods from 
-    the user's sleep history."""
-    def create_graph(self):
-        mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
-        for mood in self.get_mood():
-            if mood in mood_counts:
-                mood_counts[mood] += 1
-        plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
-        plt.title(f"{self.username}'s Mood Distribution")
-        plt.xlabel("Mood")
-        plt.ylabel("Count")
-        plt.show()
-
-class DurationGraph(SleepGraph):
-    """This class creates a pie chart showing the distribution of sleep
-      durations from the user's sleep history."""
-    def create_graph(self):
-        durations = []
-        for duration in self.get_duration():
-            hours = int(duration)
-            if hours >= 8:
-                durations.append(8)  # Cap the duration at 8 hours for the graph
-            else:
-                durations.append(hours)
-        counts = [durations.count(i) for i in range(0, 9)]
-        labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"]
-        graph_count = []
-        graph_label = []
-        for i in range(len(counts)):
-            if counts[i] > 0:
-                graph_count.append(counts[i])
-                graph_label.append(labels[i])
-        plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
-        plt.title(f"{self.username}'s Sleep Duration Distribution")
-        plt.axis('equal')
-        plt.show()
-
-        
-
 
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
@@ -217,12 +133,18 @@ def show_sleep():
     """Brings the sleep session frame to the front and hides other frames."""
     sleep_frame.tkraise()
 
+def show_history():
+    """Brings the sleep history frame to the front and hides other frames."""
+    history_frame.tkraise()
+
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
     graphs_frame.tkraise()
     improvements()  # Call the improve_graph function to update the average sleep duration
     
    
+
+
 #To check if the login is successful or not and display message accordingly
 def handle_login():
     username = username_entry.get().strip()
@@ -333,7 +255,7 @@ def handle_wake():
         mood_button_frame.grid()  
         dashboard_frame.grid()  
         sleep_back_button.grid()  
-
+ 
     # Save the sleep session to the user's sleep history
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
@@ -342,9 +264,14 @@ def handle_wake():
         "end_time": wake_time.strftime('%Y-%m-%d %H:%M:%S'),
         "duration": str(duration)
     }
-
-    sleep_history.add_sleep_entry(sleep_entry)
-   
+  
+    encrypted_entry = {
+        "start_time": f.encrypt(sleep_entry["start_time"].encode()).decode(),
+        "end_time": f.encrypt(sleep_entry["end_time"].encode()).decode(),
+        "duration": f.encrypt(sleep_entry["duration"].encode()).decode(),
+        "mood": f.encrypt(sleep_entry.get("mood").encode()).decode() if "mood" in sleep_entry else ""
+    }
+    sleep_history.add_sleep_entry(encrypted_entry)
 
 def handle_mood(mood):
     """This function handles the mood selection after waking up. It updates
@@ -355,7 +282,8 @@ def handle_mood(mood):
     sleep_history = SleepHistory(HISTORY_FILE, username)
     if username in sleep_history.data and sleep_history.data[username]:
         last_entry = sleep_history.data[username][-1]
-        last_entry["mood"] = sleep_history.encrypt_value({"mood": mood}, "mood") #Turns into a dictionary with the key "mood" 
+        last_entry["mood"] = sleep_history.encrypt_value(mood)  # Encrypt the mood before saving  
+        sleep_history.save_data()    
     
     
 #Function to show the user's sleep history, decrypting the sleep time.
@@ -372,34 +300,102 @@ def show_history():
     header = ["Start Time", "End Time", "Duration", "Mood"]
     for col, text in enumerate(header):
          Label(history_rows, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=15)
-    
-    decrypted_history = sleep_history.get_sleep_history()
-    for row, entry in enumerate(decrypted_history, start=1):
-        for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
-            Label(history_rows, text=entry.get(key, ""), font=("Arial", 12)).grid(row=row, column=col, padx=15)
-        row += 1
-    
 
-   
+
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            if  entry.get("mood"):
+                mood = sleep_history.decrypt_value(entry["mood"])
+            else:
+                mood = "Not-recorded"
+        
+            decrypted_entry = {
+                "start_time":sleep_history.decrypt_value(entry["start_time"]),
+                "end_time": sleep_history.decrypt_value(entry["end_time"]),
+                "duration": sleep_history.decrypt_value(entry["duration"]),
+                "mood": mood
+            }
+
+            for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
+                Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
 
 def mood_graph():
     """This function generates a pie chart 
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
-    mood_analysis = MoodGraph(HISTORY_FILE, username)
-    mood_analysis.create_graph()
-    
+    sleep_history = SleepHistory(HISTORY_FILE, username)
+    mood_counts = {mood: 0 for mood in MOOD_OPTIONs} #this dictionary will hold the count of each mood, and starts at 0 
+
+    #if username in histroy data, loop through the data and decrypt the mood entries and count them
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            if entry.get("mood"):
+                 try:
+                    mood = f.decrypt(entry["mood"].encode()).decode()
+                    if mood in mood_counts: #checks if the decrypted mood is in the mood_counts dictionary  
+                        mood_counts[mood] +=1 # adds 1 to that mood
+                 except:
+                     pass
+
+    #Plotting the mood graph
+    plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
+    plt.title(f"{username}'s Mood Distribution")
+    plt.xlabel("Mood")
+    plt.ylabel("Count")
+    plt.show()
+
 def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
-    duration_analysis = DurationGraph(HISTORY_FILE, username)
-    duration_analysis.create_graph()
+    sleep_history = SleepHistory(HISTORY_FILE, username)
+    durations = []
+
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            try:
+                #Decrypt the duration and convert it to hours
+                duration_str = f.decrypt(entry["duration"].encode()).decode()
+                duration_parts = duration_str.split(':')
+                hours = int(duration_parts[0])
+                if hours >= 8:
+                    durations.append(8)  # Cap the duration at 8 hours for the graph
+                durations.append(hours)
+            except:
+                pass
+
+    counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
+    labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
+
+    graph_count =[]
+    graph_label=[]
+    for i in range(len(counts)):
+        if counts[i] > 0:
+            graph_count.append(counts[i]) # only append if the count is bigger than 0 
+            graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
+
+    #Pie chart to show the distribution of sleep durations
+    plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
+    plt.title(f"{username}'s Sleep Duration Distribution")
+    plt.axis('equal') # so it draws a circle
+    plt.show()
+ 
+   
 
 def improvements():
     username = username_entry.get()
-    sleep_analysis = SleepAnalysis(HISTORY_FILE, username)
-    durations = sleep_analysis.get_duration()
+    sleep_history = SleepHistory(HISTORY_FILE, username)
+    durations = []
 
+    if username in sleep_history.data:
+        for entry in sleep_history.data[username]:
+            try:
+                #Decrypt the duration and convert it to hours
+                duration_str = f.decrypt(entry["duration"].encode()).decode()
+                duration_parts = duration_str.split(':')
+                hours = int(duration_parts[0])
+                durations.append(hours)
+            except:
+                pass
     if durations:
         average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
@@ -427,6 +423,7 @@ window.title("sleep app")
 window.geometry("400x350")
 
 
+#Tkinter Variables
 
 
 #Dropdown variables
@@ -493,14 +490,15 @@ dashboard_frame.grid_columnconfigure(0, weight=1)
 welcome = Label(dashboard_frame, text="", font=("arial", 13), bg="lightblue")
 welcome.grid(row=0, column=0, pady=10)
 
+
 #Dropdown values
 hours = [f"{i:02d}" for i in range(24)]
 minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
 
-Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).grid(row=3, column=0, pady=5)
 
-#Setting Goals
+#Layout
 Label(dashboard_frame, text="Set Sleep Goal:", bg="lightblue").grid(row=1, column=0, pady=5)
+
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
 goal_input_frame.grid(row=2, column=0, pady=5)
@@ -510,9 +508,11 @@ Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).gr
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
 
+Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()}")).grid(row=3, column=0, pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=4, column=0, pady=5)
 Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=5, column=0, pady=5)
 Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=6, column=0, pady=5)
+
 Button(dashboard_frame, text ="Logout", command=show_login).grid(row=7, column=0, pady=5)
 
 
@@ -542,6 +542,8 @@ for mood in MOOD_OPTIONs:
 mood_button_frame.grid_remove()  # Disable mood buttons initially
 sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
 sleep_back_button.grid(row=6, column=0, pady=5)
+
+
 
 
 #Sleep History Frame
@@ -598,6 +600,8 @@ graphs_back_button.grid(row=5, column=0, pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
+
+
 
 
 #This is to  
