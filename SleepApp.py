@@ -135,12 +135,22 @@ class SleepAnalysis(SleepSession):
                 except:
                     pass
         return moods
+    def get_average(self):
+        durations = self.get_duration()
+        if durations:
+            return sum(durations) / len(durations)
+        return None
+        
     
+#Using polymorphism to create a base class for graphs and derived classes for specific graph types 
 class SleepGraph(SleepAnalysis):
+    """This is the base class for creating graphs using polymorphism"""
     def create_graph():
         pass
 
 class MoodGraph(SleepGraph):
+    """This class creates a bar graph showing the distribution of 
+    moods from the user's sleep history."""
     def create_graph(self):
         mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
         for mood in self.get_mood():
@@ -153,6 +163,8 @@ class MoodGraph(SleepGraph):
             plt.show()
 
 class DurationGraph(SleepGraph):
+    """This class creates a pie chart showing the distribution of sleep durations
+      from the user's sleep history."""
     def create_graph(self):
         durations = self.get_duration()
         counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
@@ -399,15 +411,13 @@ def sleep_graph():
 
 def improvements():
     username = username_entry.get()
-    sleep_history = SleepAnalysis(HISTORY_FILE, username)
-    durations = sleep_history.get_duration()  # Get the list of sleep durations
-
-    if durations:
-        average= sum(durations) / len(durations) #sum of all durations divided by the number of durations to get the average
-        average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")    
-
-        if average < 7: # if average is less than 7 hours, give advice to get more sleep
-            advice = "Try get more sleep each night."
+    sleep_analysis = SleepAnalysis(HISTORY_FILE, username)
+    average = sleep_analysis.get_average()  # Get the average sleep duration
+    if average is not None:
+        average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")
+        if average <7:  # if average is less than 7 hours, give advice to get more sleep
+            advice = "Try to get more sleep each night."
+            
         else: #else give advice that the user is getting enough sleep
             advice = "Great job! You are getting enough sleep."
 
