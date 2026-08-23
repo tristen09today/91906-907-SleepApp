@@ -265,7 +265,7 @@ def set_goal(goal_time):
 
 def update_bedtime_timer():
         goal_time = bedtime_goalvar.get()
-        if goal_time != "":
+        if goal_time != "" and wake_button['state'] == DISABLED:  # Only update if the user is still sleeping
             goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
             now = datetime.now()
 
@@ -279,7 +279,7 @@ def update_bedtime_timer():
             hours= total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
-            welcome.config(text=f"Time until bedtime goal: {hours:02d}:{minutes:02d}:{seconds:02d}", fg="blue")
+            bedtime_status.config(text=f"Time until bedtime goal: {hours:02d}:{minutes:02d}:{seconds:02d}", fg="blue")
         window.after(1, update_bedtime_timer)  # Update every second
          
 def update_timer(sleep_time):
@@ -299,20 +299,26 @@ def handle_sleep():
     sleep_time = datetime.now()
     goal_time = bedtime_goalvar.get()
     if goal_time != "":
-        goal_time_obj = datetime.strptime(goal_time, "%I%M%p")
+        goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
         goal_datetime = sleep_time.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
 
         #If the goal time is earlier than the current time, assume it's for the next day
         difference = sleep_time - goal_datetime
 
         if difference.total_seconds() > 0:
-            welcome.config(text=f"You are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
-        else:
-            welcome.config(text=f"You are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
-    else:
-        welcome.config(text="No sleep goal set.", fg="red")
+                sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
+                f"you are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
 
-    sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
+        else:
+             sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
+            f"you are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
+    else:
+        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
+
+    #reset bedtime status  after starting sleep
+    bedtime_goalvar.set("")  # Clear the bedtime goal after starting sleep
+    bedtime_status.config(text="")
+
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
     for button in mood_button_frame.winfo_children():
@@ -523,11 +529,14 @@ ampm= ["AM", "PM"]
 
 
 #Layout
-Label(dashboard_frame, text="Set Bedtime Target:", bg="lightblue").grid(row=1, column=0, pady=5)
+bedtime_status = Label(dashboard_frame, text="", font=("Arial", 12), bg="lightblue")
+bedtime_status.grid(row=1, column=0, pady=5)
+Label(dashboard_frame, text="Set Bedtime Target:", bg="lightblue").grid(row=2, column=0, pady=5)
 
 #Create a sub-frame to keep items side-by-side
 goal_input_frame = Frame(dashboard_frame, bg="lightblue")
-goal_input_frame.grid(row=2, column=0, pady=5)
+goal_input_frame.grid(row=3, column=0, pady=5)
+
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.grid(row=0, column=0, padx=2)
 Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=1, padx=2)
@@ -536,12 +545,13 @@ combo2.grid(row=0, column=2, padx=2)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
 combo3.grid(row=0, column=3, padx=2)
 
-Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=3, column=0, pady=5)
-Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=4, column=0, pady=5)
-Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=5, column=0, pady=5)
-Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=6, column=0, pady=5)
 
-Button(dashboard_frame, text ="Logout", command=show_login).grid(row=7, column=0, pady=5)
+Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=4, column=0, pady=5)
+Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=5, column=0, pady=5)
+Button(dashboard_frame, text="View Sleep History", command=show_history).grid(row=6, column=0, pady=5)
+Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=7, column=0, pady=5)
+
+Button(dashboard_frame, text ="Logout", command=show_login).grid(row=8, column=0, pady=5)
 
 
 #sleep session frame  
