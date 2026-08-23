@@ -349,7 +349,7 @@ def handle_sleep():
         sleep_back_button.grid_remove()  
         update_timer(sleep_time)  
      
-def handle_note(note):
+def handle_note():
     """This function handles the note input after waking up. It updates
       the sleep status and saves the note to the last sleep entry."""
     note = journal_text.get("1.0", END).strip()  # Get the note from the Text widget
@@ -361,6 +361,7 @@ def handle_note(note):
     if sleep_journal.add_note(note):
         messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
         journal_text.delete("1.0", END)  # Clear the Text widget after saving
+        journal_frame.grid_remove()  # Hide the journaling frame after saving
     
 def handle_wake():
     """ To show the duration of the sleep session and enable 
@@ -421,16 +422,12 @@ def show_history():
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
    
-    for widget in history_rows.winfo_children():
-        widget.destroy()  # Clear previous history entries
-
-    header = ["Start Time", "End Time", "Duration", "Mood", "Delete"]
-    for col, text in enumerate(header):
-         Label(history_rows, text=text, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=15)
-
+    for row in history_table.get_children():
+        history_table.delete(row)  # Clear existing rows in the table
 
     if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
+        for index, entry in enumerate(sleep_history.data[username]):
+            
             if  entry.get("mood"):
                 mood = sleep_history.decrypt_value(entry["mood"])
             else:
@@ -442,17 +439,16 @@ def show_history():
                 "duration": sleep_history.decrypt_value(entry["duration"]),
                 "mood": mood
             }
-            #for loop to display the decrypted sleep history in a table format
-            for col, key in enumerate(["start_time", "end_time", "duration", "mood"]):
-                Label(history_rows, text=decrypted_entry[key], font=("Arial", 9)).grid(row=sleep_history.data[username].index(entry) + 1, column=col, padx=5, pady=2)
+            
 
-            #Button to delete the entry, running the delete_entry function
-            Button(history_rows, text="Delete", font =("Arial", 8), command=lambda r=sleep_history.data[username].index(entry): 
-                   delete_entry(r)).grid(row=sleep_history.data[username].index(entry) + 1, column=4, padx=5, pady=2)
+            history_table.insert("", "end", iid=index, 
+            values=(decrypted_entry["start_time"], decrypted_entry["end_time"], decrypted_entry["duration"], mood))
 
 
-def delete_entry(index):
+def delete_entry():
     """This function deletes a sleep entry from the user's sleep history."""
+    index = int(history_table.selection()[0])  # Get the selected entry index
+
     answer = messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
     if answer:
         username = username_entry.get()
@@ -642,27 +638,36 @@ sleep_back_button.grid(row=6, column=0, pady=5)
 #Sleep History Frame
 history_frame = Frame(content_container, bg="lightgray")
 history_frame.grid(row=0, column=0, sticky="nsew")
-history_table_frame = Frame(history_frame, bg="white", bd=1, relief="solid")
-history_table_frame.grid(row=1, column=0 , padx=10, pady=10, sticky="nsew")
+history_frame.grid_columnconfigure(0, weight=1)
 
+Label(history_frame, text="Sleep History", font=("Arial", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
 
-# Create a canvas for the scrollable area
-history_canvas = Canvas(history_table_frame, bg="white", width= 430, height=200)
-history_canvas.grid(row=1, column=0, columnspan=5, sticky="nsew")
+#TreeView Table
+#instead of using a frame to display the sleep history, I will use a treeview table to make it easier to read and scroll through the history
+columns = ("start_time", "end_time", "duration", "mood") 
+history_table = ttk.Treeview(history_frame, columns=columns, show="headings", height=8) #
+for column in columns:
+    history_table.heading(column, text=column)
+
+history_table.column("start_time", width=100)
+history_table.column("end_time", width=100)
+history_table.column("duration", width=80)
+history_table.column("mood", width=80)
+history_table.grid(row=1, column=0, columnspan=5, padx=10, pady=5)
 
 #scrollbar for the canvas
-scrollbar = Scrollbar(history_table_frame, orient="vertical", command=history_canvas.yview)
-scrollbar.grid(row=1, column=5, sticky="ns")
-history_canvas.configure(yscrollcommand=scrollbar.set)
+history_scrollbar = Scrollbar(history_frame, orient="vertical", command=history_table.yview)
+history_scrollbar.grid(row=1, column=5, sticky="ns")
+history_table.configure(yscrollcommand=history_scrollbar.set)
 
-history_rows = Frame(history_canvas, bg="white")
-history_canvas.create_window((0, 0), window=history_rows, anchor="nw")
+#Buttons
+history_button_frame = Frame(history_frame, bg="lightgray")
+history_button_frame.grid(row=2, column=0, columnspan=5, pady=5)
 
-#update scroll region when new entries are added
-history_rows.bind("<Configure>", lambda e: history_canvas.configure(scrollregion=history_canvas.bbox("all")))
+Button(history_button_frame, text="Delete Entry", command=delete_entry).grid(row=0, column=0, padx=5)
+Button(history_button_frame, text="Return to Dashboard", command=show_dashboard).grid(row=0, column=1, padx=5)
 
-history_back_button= Button(history_frame, text="Back to Dashboard", command=show_dashboard)
-history_back_button.grid(row=3, column=0, pady=5)
+
 
 
 #Graphs and Feedback Frame
@@ -693,9 +698,8 @@ graphs_back_button.grid(row=5, column=0, pady=5)
 
 #Show the login frame first when the app opens
 login_frame.tkraise()
-
-
+#Function to update the bedtime timer every second
 update_bedtime_timer()  
 
-#This is to  
+#This is to keep the window open and running until the user closes it 
 window.mainloop()
