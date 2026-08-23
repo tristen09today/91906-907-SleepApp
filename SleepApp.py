@@ -125,6 +125,54 @@ class SleepAnalysis(SleepSession):
                 pass
         return durations
     
+    def get_mood(self):
+        moods=[]
+        for entry in self.data[self.username]:
+            if entry.get("mood"):
+                try:
+                    mood = self.decrypt_value(entry["mood"])
+                    moods.append(mood)
+                except:
+                    pass
+        return moods
+    
+class SleepGraph(SleepAnalysis):
+    def create_graph():
+        pass
+
+class MoodGraph(SleepGraph):
+    def create_graph(self):
+        mood_counts = {mood: 0 for mood in MOOD_OPTIONs}
+        for mood in self.get_mood():
+            if mood in mood_counts:
+                mood_counts[mood] += 1
+            plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
+            plt.title(f"{self.username}'s Mood Distribution")
+            plt.xlabel("Mood")
+            plt.ylabel("Count")
+            plt.show()
+
+class DurationGraph(SleepGraph):
+    def create_graph(self):
+        durations = self.get_duration()
+        counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
+        labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
+
+        graph_count =[]
+        graph_label=[]
+        for i in range(len(counts)):
+         if counts[i] > 0:
+                graph_count.append(counts[i]) # only append if the count is bigger than 0 
+                graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
+
+        #Pie chart to show the distribution of sleep durations
+        plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
+        plt.title(f"{self.username}'s Sleep Duration Distribution")
+        plt.axis('equal') # so it draws a circle
+        plt.show()
+
+        
+    
 #one instance of the UserStore class is created to manage user data
 user_store = UserStore(USER_FILE)
 
@@ -337,54 +385,21 @@ def mood_graph():
     """This function generates a pie chart 
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
-    sleep_history = SleepHistory(HISTORY_FILE, username)
-    mood_counts = {mood: 0 for mood in MOOD_OPTIONs} #this dictionary will hold the count of each mood, and starts at 0 
-
-    #if username in histroy data, loop through the data and decrypt the mood entries and count them
-    if username in sleep_history.data:
-        for entry in sleep_history.data[username]:
-            if entry.get("mood"):
-                 try:
-                    mood = sleep_history.decrypt_value(entry["mood"]) #decrypt the mood entry
-                    if mood in mood_counts: #checks if the decrypted mood is in the mood_counts dictionary  
-                        mood_counts[mood] +=1 # adds 1 to that mood
-                 except:
-                     pass
-
-    #Plotting the mood graph
-    plt.bar(mood_counts.keys(), mood_counts.values(), color=['green', 'yellow', 'red'])
-    plt.title(f"{username}'s Mood Distribution")
-    plt.xlabel("Mood")
-    plt.ylabel("Count")
-    plt.show()
+    mood_analysis = MoodGraph(HISTORY_FILE, username)
+    mood_analysis.create_graph()  # Call the create_graph method of MoodGraph
+   
 
 def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
-    sleep_history = SleepHistory(HISTORY_FILE, username)
-    durations = sleep_history.get_duration()  # Get the list of sleep durations
+    duration_analysis = DurationGraph(HISTORY_FILE, username)
+    duration_analysis.create_graph()  # Call the create_graph method of DurationGraph
     
-    counts = [durations.count(i) for i in range(0, 9)] # count number of sleep sessions for each duration from 0 to 8 hours
-    labels = ["less than 1 hour"] + [f"{i} hours" for i in range(1, 8)] + ["8+ hours"] # to label
-
-    graph_count =[]
-    graph_label=[]
-    for i in range(len(counts)):
-        if counts[i] > 0:
-            graph_count.append(counts[i]) # only append if the count is bigger than 0 
-            graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
-
-    #Pie chart to show the distribution of sleep durations
-    plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
-    plt.title(f"{username}'s Sleep Duration Distribution")
-    plt.axis('equal') # so it draws a circle
-    plt.show()
- 
    
 
 def improvements():
     username = username_entry.get()
-    sleep_history = SleepHistory(HISTORY_FILE, username)
+    sleep_history = SleepAnalysis(HISTORY_FILE, username)
     durations = sleep_history.get_duration()  # Get the list of sleep durations
 
     if durations:
