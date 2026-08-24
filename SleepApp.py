@@ -237,9 +237,6 @@ def show_sleep():
 def show_history():
     """Brings the sleep history frame to the front and hides other frames."""
     history_frame.tkraise()
-def show_journal():
-    """Brings the journaling frame to the front and hides other frames."""
-    journal_frame.tkraise()
 
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
@@ -450,13 +447,13 @@ def handle_note():
     if note == "":
         messagebox.showwarning("Empty Note", "Please enter a note before saving.")
         return
-    index = journal_frame.selected_index  # Get the selected entry index from the journal_frame
+    index = journal_popup.selected_index  # Get the selected entry index from the journal_frame
     username = username_entry.get()
     sleep_journal = SleepJournal(HISTORY_FILE, username)
     if sleep_journal.add_note(index, note):
         messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
         journal_text.delete("1.0", END)  # Clear the Text widget after saving
-        journal_frame.grid_remove()  # Hide the journaling frame after saving
+        close_journal()  # Hide the journaling frame after saving
     else:
         messagebox.showerror("Error", "Failed to save the note. Please try again.")
 
@@ -466,18 +463,25 @@ def view_note():
     if not selected:
         messagebox.showwarning("No Selection", "Please select a sleep entry to view the note.")
         return
-    index = int(selected[0])  #Get the selected entry index
+    index = int(selected[0])  # Get the selected entry index
     username = username_entry.get()
-    sleep_journal = SleepJournal(HISTORY_FILE, username)
-    journal_frame.selected_index = index  #Store the selected index in the journal_frame
+    sleep_journal= SleepJournal(HISTORY_FILE, username)
+    journal_popup.selected_index = index  # Store the selected index in the journal_popup
     note = sleep_journal.get_note(index)
-    journal_text.delete("1.0", END)  #Clear the Text widget before inserting the note
+
+    journal_text.delete("1.0", END)  # Clear the Text widget before inserting the note
+
     if note:
-        journal_text.insert(END, note)  #Insert the retrieved note into the Text widget
+        journal_text.insert("1.0", note)  # Insert the note into the Text widget
 
-     
-    journal_frame.grid()  #Show the journaling frame to view the note
-
+    #Show popup
+    journal_popup.deiconify()  # Show the journal popup
+    journal_popup.transient(window)  # Make the popup stay on top of the main window
+    journal_popup.grab_set()  # Make the popup modal
+   
+def close_journal():
+    journal_popup.withdraw()  # Hide the journaling frame when closing
+    journal_popup.grab_release()  # Release the grab when closing the popup
 
 def delete_entry():
     """This function deletes a sleep entry from the user's sleep history."""
@@ -698,28 +702,24 @@ history_table.configure(yscrollcommand=history_scrollbar.set)
 history_button_frame = Frame(history_frame, bg="lightgray")
 history_button_frame.grid(row=2, column=0, columnspan=5, pady=5)
 
-#Journaling Frame
-journal_frame = Frame(history_frame, bg="lightgray")
-journal_frame.grid(row=3, column=0, pady=5)
-
-Label(journal_frame, text="Journal Note", font=("Helvetica", 12), bg="lightgray").grid(row=0, column=0, columnspan=2, pady=5)
-journal_text = Text(journal_frame, width=40, height=5)
-journal_text.grid(row=0, column=0, pady=5)
-
-journal_scrollbar = Scrollbar(journal_frame, command=journal_text.yview)
-journal_scrollbar.grid(row=1, column=1, sticky="ns")
-journal_text.config(yscrollcommand=journal_scrollbar.set)
-
-save_note_button = Button(journal_frame, text="Save Note", command=handle_note)
-save_note_button.grid(row=2, column=0, columnspan=2, pady=5)
-journal_frame.grid_remove()  # Hide the journaling frame initially
-
 
 Button(history_button_frame, text="Delete Entry", command=delete_entry).grid(row=0, column=0, padx=5)
 Button(history_button_frame, text="Add/ View Note", command=view_note).grid(row=0, column=2, padx=5)
 Button(history_button_frame, text="Return to Dashboard", command=show_dashboard).grid(row=0, column=1, padx=5)
 
-
+#Journaling Frame
+journal_popup = Toplevel(window)
+journal_popup.title("Sleep Journal")
+journal_popup.geometry("400x300")
+Label(journal_popup, text="Sleep Journal", font=("Helvetica", 16, "bold")).pack(pady=10)
+Label(journal_popup, text="Write your note below:").pack(pady=5)
+journal_text = Text(journal_popup, height=10, width=40)
+journal_text.pack(pady=5)
+button_frame= Frame(journal_popup)
+button_frame.pack(pady=5)
+Button(button_frame, text="Save Note", command=handle_note).grid(row=0, column=0, padx=5)
+Button(button_frame, text="Close", command=close_journal).grid(row=0, column=1, padx=5)
+close_journal()  # Hide the journal popup initially
 
 
 #Graphs and Feedback Frame
