@@ -116,15 +116,21 @@ class SleepHistory(SleepSession):
             self.save_data()
             return True
         return False
+    
 class SleepJournal(SleepHistory):
-    """This class manages journal notes for each user's sleep records inheriting from SleepHistory."""
-    def add_note(self, note):
-        if self.data[self.username]:
-            self.data[self.username][-1]["note"] = self.encrypt_value(note)
+    """This class adds journaling functionality to the sleep history, allowing users to add notes to their sleep entries."""
+    def add_note(self,index, note):
+        if 0 <=index < len(self.data[self.username]):  # Check if the index is valid
+            self.data[self.username][index]["note"] = self.encrypt_value(note)  # Encrypt the note before saving
             self.save_data()
             return True
         return False
-
+        
+    def get_note(self, index):
+        if 0 <= index < len(self.data[self.username]):  # Check if the index is valid
+            encrypted_note = self.data[self.username][index].get("note", "")
+            return self.decrypt_value(encrypted_note) if encrypted_note else ""
+        return ""
 class SleepAnalysis(SleepSession):
     """This class gets data from the user's sleep history for analysis"""
     def get_duration(self):
@@ -231,6 +237,9 @@ def show_sleep():
 def show_history():
     """Brings the sleep history frame to the front and hides other frames."""
     history_frame.tkraise()
+def show_journal():
+    """Brings the journaling frame to the front and hides other frames."""
+    journal_frame.tkraise()
 
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
@@ -348,20 +357,7 @@ def handle_sleep():
         mood_button_frame.grid_remove()  
         sleep_back_button.grid_remove()  
         update_timer(sleep_time)  
-     
-def handle_note():
-    """This function handles the note input after waking up. It updates
-      the sleep status and saves the note to the last sleep entry."""
-    note = journal_text.get("1.0", END).strip()  # Get the note from the Text widget
-    if note == "":
-        messagebox.showwarning("Empty Note", "Please enter a note before saving.")
-        return
-    username= username_entry.get()
-    sleep_journal = SleepJournal(HISTORY_FILE, username)
-    if sleep_journal.add_note(note):
-        messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
-        journal_text.delete("1.0", END)  # Clear the Text widget after saving
-        journal_frame.grid_remove()  # Hide the journaling frame after saving
+
     
 def handle_wake():
     """ To show the duration of the sleep session and enable 
@@ -409,8 +405,8 @@ def handle_mood(mood):
         last_entry["mood"] = sleep_history.encrypt_value(mood)  # Encrypt the mood before saving  
         sleep_history.save_data() 
         mood_button_frame.grid_remove()  # Hide the mood button frame after selection
-        journal_frame.grid()  # Show the journaling frame after mood selection 
-    
+        show_dashboard()  # Return to the dashboard after mood selection
+        
 
 
 
@@ -447,6 +443,40 @@ def show_history():
                  mood
                  )
             )
+     
+def handle_note():
+    """This function handles the saving of a note for a selected sleep entry."""
+    note = journal_text.get("1.0", END).strip()  # Get the note from the Text widget
+    if note == "":
+        messagebox.showwarning("Empty Note", "Please enter a note before saving.")
+        return
+    index = journal_frame.selected_index  # Get the selected entry index from the journal_frame
+    username = username_entry.get()
+    sleep_journal = SleepJournal(HISTORY_FILE, username)
+    if sleep_journal.add_note(index, note):
+        messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
+        journal_text.delete("1.0", END)  # Clear the Text widget after saving
+        journal_frame.grid_remove()  # Hide the journaling frame after saving
+    else:
+        messagebox.showerror("Error", "Failed to save the note. Please try again.")
+
+
+def view_note():
+    selected = history_table.selection()
+    if not selected:
+        messagebox.showwarning("No Selection", "Please select a sleep entry to view the note.")
+        return
+    index = int(selected[0])  #Get the selected entry index
+    username = username_entry.get()
+    sleep_journal = SleepJournal(HISTORY_FILE, username)
+    journal_frame.selected_index = index  #Store the selected index in the journal_frame
+    note = sleep_journal.get_note(index)
+    journal_text.delete("1.0", END)  #Clear the Text widget before inserting the note
+    if note:
+        journal_text.insert(END, note)  #Insert the retrieved note into the Text widget
+
+     
+    journal_frame.grid()  #Show the journaling frame to view the note
 
 
 def delete_entry():
@@ -506,7 +536,7 @@ window.geometry("470x440")
 
 #Tkinter Variables
 style = ttk.Style()
-style.configure("Treeview", font=("Arial", 10), rowheight=25)
+style.configure("Treeview", font=("Helvetica", 10), rowheight=25)
 
 
 #Dropdown variables
@@ -519,7 +549,7 @@ bedtime_goalvar = StringVar(value="")
 title_frame = Frame(window, bg="lightblue", height=80)
 title_frame.pack(fill=X)
 
-Label(title_frame, text="Sleep App", font=("arial", 18)).pack(pady=10)
+Label(title_frame, text="Sleep App", font=("Helvetica", 18)).pack(pady=10)
 
 #Container to hold login_frame and register_frame in the same spot
 #so tkraise() can bring one to the front and hide the other
@@ -532,7 +562,7 @@ content_container.grid_columnconfigure(0, weight=1)
 #login Frame
 login_frame = Frame(content_container, bg="lightgreen")
 login_frame.grid(row=0, column=0, sticky="nsew")
-Label(login_frame, text="Login", font=("arial", 16), bg="lightgreen").pack(pady=10)
+Label(login_frame, text="Login", font=("Helvetica", 16), bg="lightgreen").pack(pady=10)
 Label(login_frame, text="Username", bg="lightgreen").pack()
 username_entry = Entry(login_frame)
 username_entry.pack()
@@ -541,13 +571,13 @@ password_entry = Entry(login_frame, show="*")
 password_entry.pack()
 Button(login_frame, text="Login", command=handle_login).pack(pady=5)
 Button(login_frame, text="Register", command=show_register).pack(pady=5)
-login_message_label = Label(login_frame, text="", font=("arial", 12), bg="lightgreen")
+login_message_label = Label(login_frame, text="", font=("Helvetica", 12), bg="lightgreen")
 login_message_label.pack(pady=5)
 
 #register Frame
 register_frame = Frame(content_container, bg="lightyellow")
 register_frame.grid(row=0, column=0, sticky="nsew")
-Label(register_frame, text="Register", font=("arial", 16), bg="lightyellow").pack(pady=10)
+Label(register_frame, text="Register", font=("Helvetica", 16), bg="lightyellow").pack(pady=10)
 Label(register_frame, text="Username", bg="lightyellow").pack()
 reg_username_entry = Entry(register_frame)
 reg_username_entry.pack()
@@ -563,7 +593,7 @@ reg_year_menu.pack()
 
 Button(register_frame, text="Register", command=handle_register).pack(pady=5)
 Button(register_frame, text="Back to Login", command=show_login).pack(pady=5)
-reg_message_label = Label(register_frame, text="", font=("arial", 12), bg="lightyellow")
+reg_message_label = Label(register_frame, text="", font=("Helvetica", 12), bg="lightyellow")
 reg_message_label.pack(pady=5)
 
 
@@ -571,7 +601,8 @@ reg_message_label.pack(pady=5)
 dashboard_frame = Frame(content_container, bg="lightblue")
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
 dashboard_frame.grid_columnconfigure(0, weight=1)
-welcome = Label(dashboard_frame, text="", font=("arial", 13), bg="lightblue")
+#welcome section
+welcome = Label(dashboard_frame, text="", font=("Helvetica", 13), bg="lightblue")
 welcome.grid(row=0, column=0, pady=10)
 
 
@@ -582,7 +613,7 @@ ampm= ["AM", "PM"]
 
 
 #Layout
-bedtime_status = Label(dashboard_frame, text="", font=("Arial", 12), bg="lightblue")
+bedtime_status = Label(dashboard_frame, text="", font=("Helvetica", 12), bg="lightblue")
 bedtime_status.grid(row=1, column=0, pady=5)
 Label(dashboard_frame, text="Set Bedtime Target:", bg="lightblue").grid(row=2, column=0, pady=5)
 
@@ -592,7 +623,7 @@ goal_input_frame.grid(row=3, column=0, pady=5)
 
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.grid(row=0, column=0, padx=2)
-Label(goal_input_frame, text=":", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=1, padx=2)
+Label(goal_input_frame, text=":", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=0, column=1, padx=2)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
@@ -610,30 +641,17 @@ sleep_frame = Frame(content_container, bg="lightgray")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 sleep_frame.grid_columnconfigure(0, weight=1)
 
-Label(sleep_frame, text="Sleep Session", font=("Arial", 16), bg="lightgray").grid(row=0, column=0, pady=10)
-sleep_status = Label(sleep_frame, text="", font=("Arial", 12), bg="lightgray")
+Label(sleep_frame, text="Sleep Session", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
+sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12), bg="lightgray")
 sleep_status.grid(row=1, column=0, pady=5)
-timer_label = Label(sleep_frame, text="00:00:00", font=("Arial", 35, "bold"), bg="lightgray")
+timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 35, "bold"), bg="lightgray")
 timer_label.grid(row=2, column=0, pady=5)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
 start_button.grid(row=3, column=0, pady=5)
 wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
 wake_button.grid(row=4, column=0, pady=5)
-#Journaling Frame
-journal_frame = Frame(sleep_frame, bg="lightgray")
-journal_frame.grid(row=5, column=0, pady=5)
 
-Label(journal_frame, text="Add a Note:", font=("Arial", 12), bg="lightgray").grid(row=0, column=0, columnspan=2, pady=5)
-journal_text = Text(journal_frame, width=40, height=5)
-journal_text.grid(row=1, column=0, pady=5)
 
-journal_scrollbar = Scrollbar(journal_frame, command=journal_text.yview)
-journal_scrollbar.grid(row=1, column=1, sticky="ns")
-journal_text.config(yscrollcommand=journal_scrollbar.set)
-
-save_note_button = Button(journal_frame, text="Save Note", command=handle_note)
-save_note_button.grid(row=2, column=0, columnspan=2, pady=5)
-journal_frame.grid_remove()  # Hide the journaling frame initially
 
 #Mood Check in 
 mood_button_frame = Frame(sleep_frame, bg="lightgray")
@@ -655,7 +673,7 @@ history_frame = Frame(content_container, bg="lightgray")
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
-Label(history_frame, text="Sleep History", font=("Arial", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
+Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
 
 #TreeView Table
 #instead of using a frame to display the sleep history, I will use a treeview table to make it easier to read and scroll through the history
@@ -680,7 +698,25 @@ history_table.configure(yscrollcommand=history_scrollbar.set)
 history_button_frame = Frame(history_frame, bg="lightgray")
 history_button_frame.grid(row=2, column=0, columnspan=5, pady=5)
 
+#Journaling Frame
+journal_frame = Frame(history_frame, bg="lightgray")
+journal_frame.grid(row=3, column=0, pady=5)
+
+Label(journal_frame, text="Journal Note", font=("Helvetica", 12), bg="lightgray").grid(row=0, column=0, columnspan=2, pady=5)
+journal_text = Text(journal_frame, width=40, height=5)
+journal_text.grid(row=0, column=0, pady=5)
+
+journal_scrollbar = Scrollbar(journal_frame, command=journal_text.yview)
+journal_scrollbar.grid(row=1, column=1, sticky="ns")
+journal_text.config(yscrollcommand=journal_scrollbar.set)
+
+save_note_button = Button(journal_frame, text="Save Note", command=handle_note)
+save_note_button.grid(row=2, column=0, columnspan=2, pady=5)
+journal_frame.grid_remove()  # Hide the journaling frame initially
+
+
 Button(history_button_frame, text="Delete Entry", command=delete_entry).grid(row=0, column=0, padx=5)
+Button(history_button_frame, text="Add/ View Note", command=view_note).grid(row=0, column=2, padx=5)
 Button(history_button_frame, text="Return to Dashboard", command=show_dashboard).grid(row=0, column=1, padx=5)
 
 
@@ -691,7 +727,7 @@ graphs_frame = Frame(content_container, bg="lightgray")
 graphs_frame.grid(row=0, column=0, sticky="nsew")
 graphs_frame.grid_columnconfigure(0, weight=1)
 
-graphs_label = Label(graphs_frame, text="Graphs and Feedback", font=("Arial", 16, "bold"), bg="lightgray")
+graphs_label = Label(graphs_frame, text="Graphs and Feedback", font=("Helvetica", 16, "bold"), bg="lightgray")
 graphs_label.grid(row=0, column=0, pady=5) 
 
 graph_button_frame=Frame(graphs_frame, bg="lightgray")
@@ -699,14 +735,14 @@ graph_button_frame.grid(row=2, column=0, pady=5)
 Button(graph_button_frame, text="Mood Graph", command=mood_graph).grid(row=0, column=0, padx=5)
 Button(graph_button_frame, text="Sleep Graph", command=sleep_graph).grid(row=0, column=1, padx=5)
 
-Label(graphs_frame, text="Improvement:", font=("Arial", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
+Label(graphs_frame, text="Improvement:", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
 
 improvement_frame = Frame(graphs_frame, bg="white", bd=1, relief="solid")
 improvement_frame.grid(row=4, column=0, pady=5)
 
-average_label = Label(improvement_frame, text="", font=("Arial", 14))
+average_label = Label(improvement_frame, text="", font=("Helvetica", 14))
 average_label.grid(row=0, column=0, pady=5)
-advices_label = Label(improvement_frame, text="", font=("Arial", 14))
+advices_label = Label(improvement_frame, text="", font=("Helvetica", 14))
 advices_label.grid(row=1, column=0, pady=5)
 
 graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
