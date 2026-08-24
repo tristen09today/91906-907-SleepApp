@@ -478,6 +478,8 @@ def sleep_graph():
    
 
 def improvements():
+    """Tihs finction calculates the average sleep duration from the user's sleep history and 
+    provides advice based on the average."""
     username = username_entry.get()
     sleep_analysis = SleepAnalysis(HISTORY_FILE, username)
     average = sleep_analysis.get_average()  # Get the average sleep duration
@@ -499,7 +501,7 @@ def improvements():
 
 window=Tk()
 window.title("sleep app")
-window.geometry("470x400")
+window.geometry("470x440")
 
 
 #Tkinter Variables
@@ -620,11 +622,17 @@ wake_button.grid(row=4, column=0, pady=5)
 #Journaling Frame
 journal_frame = Frame(sleep_frame, bg="lightgray")
 journal_frame.grid(row=5, column=0, pady=5)
-Label(journal_frame, text="Add a Note:", font=("Arial", 12), bg="lightgray").grid(row=0, column=0, pady=5)
+
+Label(journal_frame, text="Add a Note:", font=("Arial", 12), bg="lightgray").grid(row=0, column=0, columnspan=2, pady=5)
 journal_text = Text(journal_frame, width=40, height=5)
 journal_text.grid(row=1, column=0, pady=5)
+
+journal_scrollbar = Scrollbar(journal_frame, command=journal_text.yview)
+journal_scrollbar.grid(row=1, column=1, sticky="ns")
+journal_text.config(yscrollcommand=journal_scrollbar.set)
+
 save_note_button = Button(journal_frame, text="Save Note", command=handle_note)
-save_note_button.grid(row=2, column=0, pady=5)
+save_note_button.grid(row=2, column=0, columnspan=2, pady=5)
 journal_frame.grid_remove()  # Hide the journaling frame initially
 
 #Mood Check in 
@@ -635,6 +643,7 @@ for mood in MOOD_OPTIONs:
     state=DISABLED
     ).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
 mood_button_frame.grid_remove()  # Disable mood buttons initially
+
 sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
 sleep_back_button.grid(row=6, column=0, pady=5)
 
