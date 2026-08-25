@@ -252,7 +252,7 @@ def handle_login():
     username = username_entry.get().strip()
     password = password_entry.get()
     if user_store.login_user(username, password):
-        welcome.config(text=f"Welcome, {username}!", fg="blue")
+        welcome.config(text=f"Welcome! {username}!", fg="blue")
         show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
@@ -298,8 +298,10 @@ def set_goal(goal_time):
     bedtime_goalvar.set(goal_time)
 
 def update_bedtime_timer():
+        """This function updates the bedtime timer every second to show the 
+        remaining time until the user's bedtime goal."""
         goal_time = bedtime_goalvar.get()
-        if goal_time != "" and wake_button['state'] == DISABLED:  #Only update if the user is still sleeping
+        if goal_time != "": #if the user has set a bedtime goal, calculate the remaining time until that goal
             goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
             now = datetime.now()
 
@@ -314,12 +316,13 @@ def update_bedtime_timer():
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
             bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
-        window.after(1, update_bedtime_timer)  #Update every second
+        window.after(100, update_bedtime_timer)  #Update every second
          
 def update_timer(sleep_time):
     """This function updates the sleep timer every 
     second while the user is sleeping"""
-    if wake_button['state'] == NORMAL:  #Only update if the user is still sleeping
+    #changed state to instate as button is using ttk
+    if wake_button.instate(["!disabled"]): #Only update if the user is still sleeping
         now = datetime.now()
         duration = now - sleep_time
         duration = duration - timedelta(microseconds=duration.microseconds)  #Remove microseconds for cleaner display
@@ -340,19 +343,19 @@ def handle_sleep():
         difference = sleep_time - goal_datetime
 
         if difference.total_seconds() > 0:
-                sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
+                sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}\n"
                 f"you are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
                 sleep_status.grid(row=1, column=0, pady=5)
 
 
         else:
-             sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
+             sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}\n"
             f"you are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
              sleep_status.grid(row=1, column=0, pady=5)
     
     else:   
 
-        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
+        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}")
         sleep_status.grid(row=1, column=0, pady=5)
 
 
@@ -364,10 +367,10 @@ def handle_sleep():
     wake_button.config(state=NORMAL)    
     for button in mood_button_frame.winfo_children():
         button.config(state=DISABLED)  
-        wake_button.grid()  
-        mood_button_frame.grid_remove()  
-        sleep_back_button.grid_remove()  
-        update_timer(sleep_time)  
+    wake_button.grid()  
+    mood_button_frame.grid_remove()  
+    sleep_back_button.grid_remove()  
+    update_timer(sleep_time)  
 
     
 def handle_wake():
@@ -376,7 +379,7 @@ def handle_wake():
     wake_time = datetime.now()
     duration = wake_time - sleep_time
     duration = duration - timedelta(microseconds=duration.microseconds)  
-    sleep_status.config(text=f"Woke up at: {wake_time.strftime('%H:%M:%S')}")
+    sleep_status.config(text=f"Woke up at: {wake_time.strftime('%I:%M:%S %p')}")
     start_button.config(state=NORMAL)
     wake_button.config(state=DISABLED)
     for button in mood_button_frame.winfo_children():
@@ -390,8 +393,8 @@ def handle_wake():
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
     sleep_entry = {
-        "start_time": sleep_time.strftime('%Y-%m-%d %H:%M:%S'),
-        "end_time": wake_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "start_time": sleep_time.strftime('%Y-%m-%d %I:%M:%S %p'),
+        "end_time": wake_time.strftime('%Y-%m-%d %I:%M:%S %p'),
         "duration": str(duration)
     }
   
@@ -562,6 +565,7 @@ window.geometry("340x440")
 #importing Images 
 background_image = PhotoImage(file="images/background.png")
 
+
 #importing gif and converting it to a list of frames for animation
 gif = Image.open("images/background1.gif")
 gif_frame=[]
@@ -578,10 +582,10 @@ except EOFError:
 #Tkinter Variables
 style = ttk.Style()
 style.theme_use("clam")  #Use the "clam" theme for better aesthetics
-style.configure("Login.TButton", font=("Helvetica", 12, "bold"),  background ="#1528A1", foreground="white")
-style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background ="#1528A1", foreground="white")
+style.configure("Login.TButton", font=("Helvetica", 14, "bold"),  background ="#2940C7", foreground="white")
+style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background ="#2940C7", foreground="white")
 style.map("TButton", background=[("active", "#0D1A66")])  #Change background color on hover
-style.configure("Treeview", font=("Helvetica", 8), rowheight=25)
+style.configure("Treeview", font=("Helvetica", 9), rowheight=25)
 
 
 #Dropdown variables
@@ -612,11 +616,11 @@ login_background.place(relwidth=1, relheight=1)
 Label(login_frame, text="Login", font=("Helvetica", 18, "bold"),bg = "#1528A1", fg="white").pack(pady=10)
 Label(login_frame, text="Username",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack(pady=10)
 
-username_entry = Entry(login_frame, width = 15)
+username_entry = Entry(login_frame, width = 13, bg = "#FFEFB3", fg = "black")
 username_entry.pack()
 
 Label(login_frame, text="Password",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack(pady=5)
-password_entry = Entry(login_frame, show="*", width = 15)
+password_entry = Entry(login_frame, show="*", width = 13, bg = "#FFEFB3", fg = "black")
 password_entry.pack()
 ttk.Button(login_frame, text="Login", command=handle_login, style="Login.TButton").pack(pady=10)
 ttk.Button(login_frame, text="Register", command=show_register, style="Login.TButton").pack(pady=5)
@@ -630,10 +634,10 @@ register_background = Label(register_frame, image=background_image)
 register_background.place(relwidth=1, relheight=1)
 Label(register_frame, text="Register", font=("Helvetica", 18, "bold"),bg ="#1528A1", fg="white").pack(pady=10)
 Label(register_frame, text="Username", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
-reg_username_entry = Entry(register_frame, width= 15)
+reg_username_entry = Entry(register_frame,width = 13, bg = "#FFEFB3", fg = "black")
 reg_username_entry.pack()
 Label(register_frame, text="Password", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=5)
-reg_password_entry = Entry(register_frame, show="*", width = 15)
+reg_password_entry = Entry(register_frame, show="*",width = 13, bg = "#FFEFB3", fg = "black")
 reg_password_entry.pack()
 #year level dropdown menu
 Label(register_frame, text=" Select Year Level", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
@@ -667,32 +671,30 @@ ampm= ["AM", "PM"]
 
 
 #Layout
-goal_frame = Frame(dashboard_frame, bg="#1528A1", bd=2, relief="solid")
+goal_frame = Frame(dashboard_frame, bg="#FFEFB3", bd =3, relief="groove")
 goal_frame.grid(row=1, column=0, pady=10)
 
 
-Label(goal_frame, text="🌙 Set Bedtime Target:", bg="#1528A1", font=("Helvetica", 14, "bold"), fg = "white").grid(row=0, column=0, pady=5)
+Label(goal_frame, text="🌙 Set Bedtime Target:", bg="white", font=("Helvetica", 16, "bold"), fg = "#1528A1").grid(row=0, column=0, pady=5)
+ttk.Button(goal_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}"), style = "Function.TButton").grid(row=3, column=0, pady=5)
 
-bedtime_status = Label(goal_frame, text="", font=("Helvetica", 14, "bold"), bg="#1528A1", fg="white")
+bedtime_status = Label(goal_frame, text="", font=("Helvetica", 18, "bold"), bg="#FFEFB3", fg="#1528A1")
 bedtime_status.grid(row=1, column=0, pady=5)
 #Create a sub-frame to keep items side-by-side
-goal_input_frame = Frame(goal_frame, bg="#1528A1")
+goal_input_frame = Frame(goal_frame, bg="#FFEFB3")
 goal_input_frame.grid(row=2, column=0, pady=10)
 
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
-combo.grid(row=0, column=0, padx=2)
+combo.grid(row=0, column=0, padx=5)
 Label(goal_input_frame, text=":", font=("Helvetica", 12, "bold")).grid(row=0, column=1)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
-combo2.grid(row=0, column=2, padx=2)
+combo2.grid(row=0, column=2, padx=5)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
-combo3.grid(row=0, column=3, padx=2)
-
-Button(goal_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=3,pady=5)
-Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=5, column=0, pady=5)
-Button(dashboard_frame, text="Sleep History/Journalling", command=show_history).grid(row=6, column=0, pady=5)
-Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=7, column=0, pady=5)
-Button(dashboard_frame, text ="Logout", command=show_login).grid(row=8, column=0, pady=5)
-
+combo3.grid(row=0, column=3, padx=5)
+ttk.Button(dashboard_frame, text="Start Sleep Session", command=show_sleep, style = "Login.TButton").grid(row=5, column=0, pady=5)
+ttk.Button(dashboard_frame, text="Sleep History/Journalling", command=show_history,style = "Login.TButton").grid(row=6, column=0, pady=5)
+ttk.Button(dashboard_frame, text = "Graphs and help", command =show_graphs, style = "Login.TButton").grid(row=7, column=0, pady=5)
+ttk.Button(dashboard_frame, text ="Logout", command=show_login, style = "Login.TButton").grid(row=8, column=0, pady=5)
 
 #sleep session frame  
 sleep_frame = Frame(content_container, bg="#141B4A")
@@ -701,18 +703,16 @@ sleep_frame.grid_columnconfigure(0, weight=1)
 sleep_background = Label(sleep_frame, image=gif_frame[0])
 sleep_background.place(relwidth=1, relheight=1)
 
-
-Label(sleep_frame, text="Sleep Session", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
+Label
+Label(sleep_frame, text="Sleep Session💤", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
 sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12), bg="lightgray")
 timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 45, "bold"), bg="#141B4A", fg="white")
 timer_label.grid(row=2, column=0, pady=5)
-start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
+start_button = ttk.Button(sleep_frame, text="Start Sleep", command=handle_sleep, style = "Function.TButton")
 start_button.grid(row=3, column=0, pady=5)
-wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake)
+wake_button = ttk.Button(sleep_frame, text="Wake Up", command=handle_wake,style = "Function.TButton", state=DISABLED)
 wake_button.grid(row=4, column=0, pady=5)
 wake_button.grid_remove()  
-
-
 
 #Mood Check in 
 mood_button_frame = Frame(sleep_frame, bg="lightgray")
@@ -726,33 +726,29 @@ mood_button_frame.grid_remove()  #Disable mood buttons initially
 sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
 sleep_back_button.grid(row=6, column=0, pady=5)
 
-
-
-
 #Sleep History Frame
-history_frame = Frame(content_container)
+history_frame = Frame(content_container, bg = "lightgrey")
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
 
-Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
+Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgrey").grid(row=0, column=0, pady=10)
 
 #TreeView Table
-#instead of using a frame to display the sleep history, I will use a treeview table to make it easier to read and scroll through the history
-
+#instead of using a frame to display the sleep history, I used a treeview table to make it easier to read and scroll through the history
 columns = ("start_time", "end_time", "duration", "mood") 
 history_table = ttk.Treeview(history_frame, columns=columns, show="headings", height=8) #
 for column in columns:
     history_table.heading(column, text=column)
 
-history_table.column("start_time", width=80)
-history_table.column("end_time", width=80)
-history_table.column("duration", width=70)
-history_table.column("mood", width=70)
-history_table.grid(row=1, column=0, columnspan=5, padx=10, pady=5)
+history_table.column("start_time", width=100)
+history_table.column("end_time", width=100)
+history_table.column("duration", width=55)
+history_table.column("mood", width=68)
+history_table.grid(row=1, column=0, columnspan=5, pady=5)
 
 #scrollbar for the canvas
-history_scrollbar = Scrollbar(history_frame, orient="vertical", command=history_table.yview)
+history_scrollbar = Scrollbar(history_frame, orient="vertical", command=history_table.yview, width=13)
 history_scrollbar.grid(row=1, column=5, sticky="ns")
 history_table.configure(yscrollcommand=history_scrollbar.set)
 
