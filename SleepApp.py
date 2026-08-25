@@ -255,6 +255,7 @@ def handle_login():
         show_dashboard()
     else:
         login_message_label.config(text="Invalid username or password.", fg="red")
+        login_message_label.pack(pady=5)
 
 #To check if the registration is successful or not and display message 
 def handle_register():
@@ -262,21 +263,26 @@ def handle_register():
     password = reg_password_entry.get()
     year = reg_year_var.get()
 
-    #if year level not from 9 to 13
-    if int(year) not in YEAR_ELIGIBILITY:
-        reg_message_label.config(text="You must be in year 9 to 13 to register.", fg="red")
-        return
     #Check if the user and pass fields are empty 
     if username == "" or password == "":
         reg_message_label.config(text="Username and password cannot be empty.", fg="red")
+        reg_message_label.pack(pady=5)
+        return
+     #check if username is less than 3 characters
+    if len(username) < MIN_USER:
+        reg_message_label.config(text="Username must be at least 3 characters long.", fg="red")
+        reg_message_label.pack(pady=5)
         return
     #check if pass is lss than 8 characters
     if len(password) < MIN_PASS:
         reg_message_label.config(text="Password must be at least 8 characters long.", fg="red")
+        reg_message_label.pack(pady=5)
         return
-    #check if username is less than 3 characters
-    if len(username) < MIN_USER:
-        reg_message_label.config(text="Username must be at least 3 characters long.", fg="red")
+    
+     #if year level not from 9 to 13
+    if int(year) not in YEAR_ELIGIBILITY:
+        reg_message_label.config(text="You must be in year 9 to 13 to register.", fg="red")
+        reg_message_label.pack(pady=5)
         return
     
     if user_store.register_user(username, password):
@@ -306,7 +312,7 @@ def update_bedtime_timer():
             hours= total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
-            bedtime_status.config(text=f"Time until bedtime goal: {hours:02d}:{minutes:02d}:{seconds:02d}", fg="blue")
+            bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
         window.after(1, update_bedtime_timer)  # Update every second
          
 def update_timer(sleep_time):
@@ -534,17 +540,20 @@ def improvements():
 #Window setup
 window=Tk()
 window.title("sleep app")
-window.geometry("300x440")
+window.geometry("340x440")
 
 #importing Images 
 background_image = PhotoImage(file="images/background.png")
+#importing gif
+background_gif = PhotoImage(file="images/background1.gif")
 
 #Tkinter Variables
 style = ttk.Style()
 style.theme_use("clam")  # Use the "clam" theme for better aesthetics
-style.configure("TButton", font=("Helvetica", 12, "bold"),  background ="#1528A1", foreground="white")
+style.configure("Login.TButton", font=("Helvetica", 12, "bold"),  background ="#1528A1", foreground="white")
+style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background ="#1528A1", foreground="white")
 style.map("TButton", background=[("active", "#0D1A66")])  # Change background color on hover
-style.configure("Treeview", font=("Helvetica", 10), rowheight=25)
+style.configure("Treeview", font=("Helvetica", 8), rowheight=25)
 
 
 #Dropdown variables
@@ -572,51 +581,54 @@ login_frame.grid(row=0, column=0, sticky="nsew")
 login_background = Label(login_frame, image=background_image)
 login_background.place(relwidth=1, relheight=1)
 
-Label(login_frame, text="Login", font=("Helvetica", 16, "bold"),bg = "#1528A1", fg="white").pack(pady=10)
-Label(login_frame, text="Username",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack()
+Label(login_frame, text="Login", font=("Helvetica", 18, "bold"),bg = "#1528A1", fg="white").pack(pady=10)
+Label(login_frame, text="Username",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack(pady=10)
 
 username_entry = Entry(login_frame, width = 15)
 username_entry.pack()
 
-Label(login_frame, text="Password",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack()
+Label(login_frame, text="Password",font =("Helvetica", 14, "bold"),bg = "#1528A1", fg="white").pack(pady=5)
 password_entry = Entry(login_frame, show="*", width = 15)
 password_entry.pack()
-ttk.Button(login_frame, text="Login", command=handle_login, style="TButton").pack(pady=5)
-ttk.Button(login_frame, text="Register", command=show_register, style="TButton").pack(pady=5)
-login_message_label = Label(login_frame, text="", font=("Helvetica", 12))
-login_message_label.pack(pady=5)
+ttk.Button(login_frame, text="Login", command=handle_login, style="Login.TButton").pack(pady=10)
+ttk.Button(login_frame, text="Register", command=show_register, style="Login.TButton").pack(pady=5)
+login_message_label = Label(login_frame, text="", font=("Helvetica", 12), bg = "#1528A1")  
+
 
 #register Frame
 register_frame = Frame(content_container)
 register_frame.grid(row=0, column=0, sticky="nsew")
 register_background = Label(register_frame, image=background_image)
 register_background.place(relwidth=1, relheight=1)
-Label(register_frame, text="Register", font=("Helvetica", 16, "bold"),bg ="#1528A1", fg="white").pack(pady=10)
-Label(register_frame, text="Username", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack()
+Label(register_frame, text="Register", font=("Helvetica", 18, "bold"),bg ="#1528A1", fg="white").pack(pady=10)
+Label(register_frame, text="Username", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
 reg_username_entry = Entry(register_frame, width= 15)
 reg_username_entry.pack()
-Label(register_frame, text="Password", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack()
+Label(register_frame, text="Password", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=5)
 reg_password_entry = Entry(register_frame, show="*", width = 15)
 reg_password_entry.pack()
 #year level dropdown menu
-Label(register_frame, text="Year Level", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack()
+Label(register_frame, text=" Select Year Level", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
 reg_year_var = StringVar(register_frame)
 reg_year_var.set(YEAR_LEVELS[0])  # Set default value
-reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS)
+reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS) #DropDown box
 reg_year_menu.pack()
 
-ttk.Button(register_frame, text="Register", command=handle_register, style ="TButton").pack(pady=5)
-ttk.Button(register_frame, text="Back to Login", command=show_login, style="TButton").pack(pady=5)
-reg_message_label = Label(register_frame, text="", font=("Helvetica", 12), bg="white")
-reg_message_label.pack(pady=5)
+ttk.Button(register_frame, text="Register", command=handle_register, style ="Login.TButton").pack(pady=5)
+ttk.Button(register_frame, text="Back to Login", command=show_login, style="Login.TButton").pack(pady=5)
+reg_message_label = Label(register_frame, text="", font=("Helvetica", 12), bg = "#1528A1") 
 
 
 #Dashboard Frame
-dashboard_frame = Frame(content_container, bg="lightblue")
+dashboard_frame = Frame(content_container)
 dashboard_frame.grid(row=0, column=0, sticky="nsew")
 dashboard_frame.grid_columnconfigure(0, weight=1)
+
+dashboard_background = Label(dashboard_frame, image=background_image)
+dashboard_background.place(relwidth=1, relheight=1)
+
 #welcome section
-welcome = Label(dashboard_frame, text="", font=("Helvetica", 13), bg="lightblue")
+welcome = Label(dashboard_frame, text="", font=("Helvetica", 13, "bold"), bg="white")
 welcome.grid(row=0, column=0, pady=10)
 
 
@@ -627,23 +639,27 @@ ampm= ["AM", "PM"]
 
 
 #Layout
-bedtime_status = Label(dashboard_frame, text="", font=("Helvetica", 12), bg="lightblue")
-bedtime_status.grid(row=1, column=0, pady=5)
-Label(dashboard_frame, text="Set Bedtime Target:", bg="lightblue").grid(row=2, column=0, pady=5)
+goal_frame = Frame(dashboard_frame, bg="#1528A1", bd=2, relief="solid")
+goal_frame.grid(row=1, column=0, pady=10)
 
+
+Label(goal_frame, text="🌙 Set Bedtime Target:", bg="#1528A1", font=("Helvetica", 14, "bold"), fg = "white").grid(row=0, column=0, pady=5)
+
+bedtime_status = Label(goal_frame, text="", font=("Helvetica", 14, "bold"), bg="#1528A1", fg="white")
+bedtime_status.grid(row=1, column=0, pady=5)
 #Create a sub-frame to keep items side-by-side
-goal_input_frame = Frame(dashboard_frame, bg="lightblue")
-goal_input_frame.grid(row=3, column=0, pady=5)
+goal_input_frame = Frame(goal_frame, bg="#1528A1")
+goal_input_frame.grid(row=2, column=0, pady=10)
 
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.grid(row=0, column=0, padx=2)
-Label(goal_input_frame, text=":", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=0, column=1, padx=2)
+Label(goal_input_frame, text=":", font=("Helvetica", 12, "bold")).grid(row=0, column=1, padx=2)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
 combo3.grid(row=0, column=3, padx=2)
 
-Button(dashboard_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=4, column=0, pady=5)
+Button(goal_frame, text="Set Goal", command=lambda: set_goal(f"{hour_var.get()}:{minute_var.get()} {ampm_var.get()}")).grid(row=3,pady=5)
 Button(dashboard_frame, text="Start Sleep Session", command=show_sleep).grid(row=5, column=0, pady=5)
 Button(dashboard_frame, text="Sleep History/Journalling", command=show_history).grid(row=6, column=0, pady=5)
 Button(dashboard_frame, text = "Graphs and help", command =show_graphs).grid(row=7, column=0, pady=5)
@@ -651,14 +667,14 @@ Button(dashboard_frame, text ="Logout", command=show_login).grid(row=8, column=0
 
 
 #sleep session frame  
-sleep_frame = Frame(content_container, bg="lightgray")
+sleep_frame = Frame(content_container, bg="#141B4A")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 sleep_frame.grid_columnconfigure(0, weight=1)
 
 Label(sleep_frame, text="Sleep Session", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
 sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12), bg="lightgray")
 sleep_status.grid(row=1, column=0, pady=5)
-timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 35, "bold"), bg="lightgray")
+timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 45, "bold"), bg="#141B4A", fg="white")
 timer_label.grid(row=2, column=0, pady=5)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
 start_button.grid(row=3, column=0, pady=5)
@@ -683,10 +699,11 @@ sleep_back_button.grid(row=6, column=0, pady=5)
 
 
 #Sleep History Frame
-history_frame = Frame(content_container, bg="lightgray")
+history_frame = Frame(content_container)
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
+histroy_background = Label(history_frame, image=background_image)
 Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
 
 #TreeView Table
@@ -697,10 +714,10 @@ history_table = ttk.Treeview(history_frame, columns=columns, show="headings", he
 for column in columns:
     history_table.heading(column, text=column)
 
-history_table.column("start_time", width=100)
-history_table.column("end_time", width=100)
-history_table.column("duration", width=80)
-history_table.column("mood", width=80)
+history_table.column("start_time", width=80)
+history_table.column("end_time", width=80)
+history_table.column("duration", width=70)
+history_table.column("mood", width=70)
 history_table.grid(row=1, column=0, columnspan=5, padx=10, pady=5)
 
 #scrollbar for the canvas
@@ -711,9 +728,9 @@ history_table.configure(yscrollcommand=history_scrollbar.set)
 #Buttons
 history_button_frame = Frame(history_frame, bg="lightgray")
 history_button_frame.grid(row=2, column=0, columnspan=5, pady=5)
-Button(history_button_frame, text="Delete Entry", command=delete_entry).grid(row=0, column=0, padx=5)
-Button(history_button_frame, text="Add/ View Note", command=view_note).grid(row=0, column=2, padx=5)
-Button(history_button_frame, text="Return to Dashboard", command=show_dashboard).grid(row=0, column=1, padx=5)
+ttk.Button(history_button_frame, text="Delete Entry", command=delete_entry, style = "Function.TButton").grid(row=0, column=0, padx=5)
+ttk.Button(history_button_frame, text="Return to Dashboard", command=show_dashboard, style  = "Function.TButton").grid(row=0, column=1, padx=5)
+ttk.Button(history_button_frame, text="Add/ View Note", command=view_note,  style  = "Function.TButton").grid(row=0, column=2, padx=5)
 
 #Journaling Frame
 journal_popup = Toplevel(window)
