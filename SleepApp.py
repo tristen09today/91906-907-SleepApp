@@ -24,7 +24,7 @@ KEY_FILE = "histroy.key"
 HISTORY_FILE = "sleep_history.json"
 YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
-MOOD_OPTIONs= ["Great", "Okay", "Tired"]
+MOOD_OPTIONs= ["😁 Great", "🙆 Okay", "🥱 Tired"]
 
 #Generating a key to encrypt the user's sleep history and sleep quality analysis
 def load_key():
@@ -582,8 +582,12 @@ except EOFError:
 #Tkinter Variables
 style = ttk.Style()
 style.theme_use("clam")  #Use the "clam" theme for better aesthetics
+#For login and register buttons, set the font, background color, and foreground color
 style.configure("Login.TButton", font=("Helvetica", 14, "bold"),  background ="#2940C7", foreground="white")
+#For the function buttons, set the font, background color, and foreground color
 style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background ="#2940C7", foreground="white")
+#For Sleep and Wake buttons, set the font, background color, and foreground color
+style.configure("Sleep.TButton", font=("Helvetica", 18, "bold"),  background ="#2940C7", foreground="white")
 style.map("TButton", background=[("active", "#0D1A66")])  #Change background color on hover
 style.configure("Treeview", font=("Helvetica", 9), rowheight=25)
 
@@ -704,26 +708,25 @@ sleep_background = Label(sleep_frame, image=gif_frame[0])
 sleep_background.place(relwidth=1, relheight=1)
 
 Label
-Label(sleep_frame, text="Sleep Session💤", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
-sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12), bg="lightgray")
-timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 45, "bold"), bg="#141B4A", fg="white")
+Label(sleep_frame, text="Sleep Session 😴", font=("Helvetica", 16, "bold"), bg="#1528A1", fg = "#FFEFB3").grid(row=0, column=0, pady=10)
+sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12, "bold"), bg="#1528A1", fg="white")
+timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 60, "bold"), bg="#141B4A", fg="white")
 timer_label.grid(row=2, column=0, pady=5)
-start_button = ttk.Button(sleep_frame, text="Start Sleep", command=handle_sleep, style = "Function.TButton")
-start_button.grid(row=3, column=0, pady=5)
-wake_button = ttk.Button(sleep_frame, text="Wake Up", command=handle_wake,style = "Function.TButton", state=DISABLED)
+start_button = ttk.Button(sleep_frame, text="Start Sleep", command=handle_sleep, style = "Sleep.TButton")
+start_button.grid(row=3, column=0, pady=10)
+wake_button = ttk.Button(sleep_frame, text="Wake Up", command=handle_wake,style = "Sleep.TButton", state=DISABLED)
 wake_button.grid(row=4, column=0, pady=5)
 wake_button.grid_remove()  
 
 #Mood Check in 
-mood_button_frame = Frame(sleep_frame, bg="lightgray")
+mood_button_frame = Frame(sleep_frame)
 mood_button_frame.grid(row=5, column=0, pady=5)
 for mood in MOOD_OPTIONs:
-    Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
-    state=DISABLED
-    ).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
+    ttk.Button(mood_button_frame, text=mood, command=lambda m=mood:
+                handle_mood(m), style = "Function.TButton", state=DISABLED).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
 mood_button_frame.grid_remove()  #Disable mood buttons initially
 
-sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
+sleep_back_button=ttk.Button(sleep_frame, text="Back to Dashboard", command=show_dashboard, style = "Login.TButton")
 sleep_back_button.grid(row=6, column=0, pady=5)
 
 #Sleep History Frame
