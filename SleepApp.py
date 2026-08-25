@@ -12,6 +12,7 @@ from datetime import *
 from cryptography.fernet import Fernet
 import matplotlib.pyplot as plt
 from tkinter import messagebox
+from PIL import Image, ImageTk
 
 
 #CONSTANTS  
@@ -76,7 +77,7 @@ class UserStore(JSONStore):
         """Using the hash_password function, this function registers 
         a new user by storing their username and hashed password in the users dictionary."""
         if username in self.users:
-            return False  # User already exists
+            return False  #User already exists
         self.users[username] = self.hash_password(password)
         self.save_data()
         return True
@@ -111,7 +112,7 @@ class SleepHistory(SleepSession):
         self.save_data()
     def delete_sleep_entry(self, index):
         """This function deletes one sleep record ."""
-        if 0 <= index < len(self.data[self.username]): # Check if the index is valid
+        if 0 <= index < len(self.data[self.username]): #Check if the index is valid
             del self.data[self.username][index]
             self.save_data()
             return True
@@ -120,14 +121,14 @@ class SleepHistory(SleepSession):
 class SleepJournal(SleepHistory):
     """This class adds journaling functionality to the sleep history, allowing users to add notes to their sleep entries."""
     def add_note(self,index, note):
-        if 0 <=index < len(self.data[self.username]):  # Check if the index is valid
-            self.data[self.username][index]["note"] = self.encrypt_value(note)  # Encrypt the note before saving
+        if 0 <=index < len(self.data[self.username]):  #Check if the index is valid
+            self.data[self.username][index]["note"] = self.encrypt_value(note)  #Encrypt the note before saving
             self.save_data()
             return True
         return False
         
     def get_note(self, index):
-        if 0 <= index < len(self.data[self.username]):  # Check if the index is valid
+        if 0 <= index < len(self.data[self.username]):  #Check if the index is valid
             encrypted_note = self.data[self.username][index].get("note", "")
             return self.decrypt_value(encrypted_note) if encrypted_note else ""
         return ""
@@ -191,23 +192,23 @@ class DurationGraph(SleepGraph):
         graph_duration=[]
         for hour in durations:
             if hour >= 8:
-                graph_duration.append(8)  # Group all durations of 8 hours or more into the "8+ hours" category
+                graph_duration.append(8)  #Group all durations of 8 hours or more into the "8+ hours" category
             else:
                 graph_duration.append(hour)
-        counts = [graph_duration.count(i) for i in range(9)]  # Count occurrences of each duration from 0 to 8
-        labels = [f"{i} hours" for i in range(8)] + ["8+ hours"] # Create labels for the pie chart
+        counts = [graph_duration.count(i) for i in range(9)]  #Count occurrences of each duration from 0 to 8
+        labels = [f"{i} hours" for i in range(8)] + ["8+ hours"] #Create labels for the pie chart
 
         graph_count =[]
         graph_label=[]
         for i in range(len(counts)):
          if counts[i] > 0:
-                graph_count.append(counts[i]) # only append if the count is bigger than 0 
-                graph_label.append(labels[i]) # if count is bigger than 0, append the label to the graph. 
+                graph_count.append(counts[i]) #only append if the count is bigger than 0 
+                graph_label.append(labels[i]) #if count is bigger than 0, append the label to the graph. 
 
         #Pie chart to show the distribution of sleep durations
         plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
         plt.title(f"{self.username}'s Sleep Duration Distribution")
-        plt.axis('equal') # so it draws a circle
+        plt.axis('equal') #so it draws a circle
         plt.show()
 
         
@@ -241,7 +242,7 @@ def show_history():
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
     graphs_frame.tkraise()
-    improvements()  # Call the improve_graph function to update the average sleep duration
+    improvements()  #Call the improve_graph function to update the average sleep duration
     
    
 
@@ -286,7 +287,7 @@ def handle_register():
         return
     
     if user_store.register_user(username, password):
-        show_login() # if registration is successful, show the login frame
+        show_login() #if registration is successful, show the login frame
         
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
@@ -298,14 +299,14 @@ def set_goal(goal_time):
 
 def update_bedtime_timer():
         goal_time = bedtime_goalvar.get()
-        if goal_time != "" and wake_button['state'] == DISABLED:  # Only update if the user is still sleeping
+        if goal_time != "" and wake_button['state'] == DISABLED:  #Only update if the user is still sleeping
             goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
             now = datetime.now()
 
             goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
        
             if goal_datetime<now:
-                goal_datetime += timedelta(days=1)  # If the goal time is earlier than now, assume it's for the next day
+                goal_datetime += timedelta(days=1)  #If the goal time is earlier than now, assume it's for the next day
 
             time_remaining = goal_datetime - now
             total_seconds = int(time_remaining.total_seconds())
@@ -313,17 +314,17 @@ def update_bedtime_timer():
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
             bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
-        window.after(1, update_bedtime_timer)  # Update every second
+        window.after(1, update_bedtime_timer)  #Update every second
          
 def update_timer(sleep_time):
     """This function updates the sleep timer every 
     second while the user is sleeping"""
-    if wake_button['state'] == NORMAL:  # Only update if the user is still sleeping
+    if wake_button['state'] == NORMAL:  #Only update if the user is still sleeping
         now = datetime.now()
         duration = now - sleep_time
-        duration = duration - timedelta(microseconds=duration.microseconds)  # Remove microseconds for cleaner display
+        duration = duration - timedelta(microseconds=duration.microseconds)  #Remove microseconds for cleaner display
         timer_label.config(text=str(duration))
-        timer_label.after(1000, update_timer, sleep_time)  # Update every second
+        timer_label.after(1000, update_timer, sleep_time)  #Update every second
 
 def handle_sleep():
     """To show the starting time of the sleep session and disable 
@@ -341,15 +342,22 @@ def handle_sleep():
         if difference.total_seconds() > 0:
                 sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
                 f"you are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
+                sleep_status.grid(row=1, column=0, pady=5)
+
 
         else:
              sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}\n"
             f"you are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
-    else:
+             sleep_status.grid(row=1, column=0, pady=5)
+    
+    else:   
+
         sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%H:%M:%S')}")
+        sleep_status.grid(row=1, column=0, pady=5)
+
 
     #reset bedtime status  after starting sleep
-    bedtime_goalvar.set("")  # Clear the bedtime goal after starting sleep
+    bedtime_goalvar.set("")  #Clear the bedtime goal after starting sleep
     bedtime_status.config(text="")
 
     start_button.config(state=DISABLED)
@@ -378,7 +386,7 @@ def handle_wake():
         dashboard_frame.grid()  
         sleep_back_button.grid()  
  
-    # Save the sleep session to the user's sleep history
+    #Save the sleep session to the user's sleep history
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
     sleep_entry = {
@@ -400,15 +408,15 @@ def handle_mood(mood):
     """This function handles the mood selection after waking up. It updates
       the sleep status and saves the mood to the last sleep entry."""
     sleep_status.config(text=f"Selected mood: {mood}")
-    # Save the mood to the last sleep entry
+    #Save the mood to the last sleep entry
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
     if username in sleep_history.data and sleep_history.data[username]:
         last_entry = sleep_history.data[username][-1]
-        last_entry["mood"] = sleep_history.encrypt_value(mood)  # Encrypt the mood before saving  
+        last_entry["mood"] = sleep_history.encrypt_value(mood)  #Encrypt the mood before saving  
         sleep_history.save_data() 
-        mood_button_frame.grid_remove()  # Hide the mood button frame after selection
-        show_dashboard()  # Return to the dashboard after mood selection
+        mood_button_frame.grid_remove()  #Hide the mood button frame after selection
+        show_dashboard()  #Return to the dashboard after mood selection
         
 
 
@@ -422,7 +430,7 @@ def show_history():
     sleep_history = SleepHistory(HISTORY_FILE, username)
    
     for row in history_table.get_children():
-        history_table.delete(row)  # Clear existing rows in the table
+        history_table.delete(row)  #Clear existing rows in the table
 
     if username in sleep_history.data:
         for index, entry in enumerate(sleep_history.data[username]):
@@ -449,17 +457,17 @@ def show_history():
      
 def handle_note():
     """This function handles the saving of a note for a selected sleep entry."""
-    note = journal_text.get("1.0", END).strip()  # Get the note from the Text widget
+    note = journal_text.get("1.0", END).strip()  #Get the note from the Text widget
     if note == "":
         messagebox.showwarning("Empty Note", "Please enter a note before saving.")
         return
-    index = journal_popup.selected_index  # Get the selected entry index from the journal_frame
+    index = journal_popup.selected_index  #Get the selected entry index from the journal_frame
     username = username_entry.get()
     sleep_journal = SleepJournal(HISTORY_FILE, username)
     if sleep_journal.add_note(index, note):
         messagebox.showinfo("Note Saved", "Your note has been saved successfully.")
-        journal_text.delete("1.0", END)  # Clear the Text widget after saving
-        close_journal()  # Hide the journaling frame after saving
+        journal_text.delete("1.0", END)  #Clear the Text widget after saving
+        close_journal()  #Hide the journaling frame after saving
     else:
         messagebox.showerror("Error", "Failed to save the note. Please try again.")
 
@@ -469,36 +477,36 @@ def view_note():
     if not selected:
         messagebox.showwarning("No Selection", "Please select a sleep entry to view the note.")
         return
-    index = int(selected[0])  # Get the selected entry index
+    index = int(selected[0])  #Get the selected entry index
     username = username_entry.get()
     sleep_journal= SleepJournal(HISTORY_FILE, username)
-    journal_popup.selected_index = index  # Store the selected index in the journal_popup
+    journal_popup.selected_index = index  #Store the selected index in the journal_popup
     note = sleep_journal.get_note(index)
 
-    journal_text.delete("1.0", END)  # Clear the Text widget before inserting the note
+    journal_text.delete("1.0", END)  #Clear the Text widget before inserting the note
 
     if note:
-        journal_text.insert("1.0", note)  # Insert the note into the Text widget
+        journal_text.insert("1.0", note)  #Insert the note into the Text widget
 
     #Show popup
-    journal_popup.deiconify()  # Show the journal popup
-    journal_popup.transient(window)  # Make the popup stay on top of the main window
-    journal_popup.grab_set()  # Make the popup modal
+    journal_popup.deiconify()  #Show the journal popup
+    journal_popup.transient(window)  #Make the popup stay on top of the main window
+    journal_popup.grab_set()  #Make the popup modal
    
 def close_journal():
-    journal_popup.withdraw()  # Hide the journaling frame when closing
-    journal_popup.grab_release()  # Release the grab when closing the popup
+    journal_popup.withdraw()  #Hide the journaling frame when closing
+    journal_popup.grab_release()  #Release the grab when closing the popup
 
 def delete_entry():
     """This function deletes a sleep entry from the user's sleep history."""
-    index = int(history_table.selection()[0])  # Get the selected entry index
+    index = int(history_table.selection()[0])  #Get the selected entry index
 
     answer = messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
     if answer:
         username = username_entry.get()
         sleep_history = SleepHistory(HISTORY_FILE, username)
         sleep_history.delete_sleep_entry(index)
-        show_history()  # Refresh the history display after deletion
+        show_history()  #Refresh the history display after deletion
             
             
 def mood_graph():
@@ -506,14 +514,14 @@ def mood_graph():
     showing the distribution of moods from the user's sleep history."""
     username = username_entry.get()
     mood_analysis = MoodGraph(HISTORY_FILE, username)
-    mood_analysis.create_graph()  # Call the create_graph method of MoodGraph
+    mood_analysis.create_graph()  #Call the create_graph method of MoodGraph
    
 
 def sleep_graph():
     """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
     username = username_entry.get()
     duration_analysis = DurationGraph(HISTORY_FILE, username)
-    duration_analysis.create_graph()  # Call the create_graph method of DurationGraph
+    duration_analysis.create_graph()  #Call the create_graph method of DurationGraph
     
    
 
@@ -522,10 +530,10 @@ def improvements():
     provides advice based on the average."""
     username = username_entry.get()
     sleep_analysis = SleepAnalysis(HISTORY_FILE, username)
-    average = sleep_analysis.get_average()  # Get the average sleep duration
+    average = sleep_analysis.get_average()  #Get the average sleep duration
     if average is not None:
         average_label.config(text=f"Average Sleep Duration: {average:.2f} hours", fg="blue")
-        if average <7:  # if average is less than 7 hours, give advice to get more sleep
+        if average <7:  #if average is less than 7 hours, give advice to get more sleep
             advice = "Try to get more sleep each night."
 
         else: #else give advice that the user is getting enough sleep
@@ -536,6 +544,15 @@ def improvements():
     else:
         average_label.config(text="No sleep data available.", fg="black")
         advices_label.config(text="Complete a session.", fg="black") 
+
+#This function animates the gif in the sleep frame by updating the image
+def animate_gif(frame=0):
+    sleep_background.config(image=gif_frame[frame])
+    frame +=1
+    if frame == len(gif_frame):
+        frame = 0
+    history_frame.after(100, animate_gif, frame)  
+
  
 #Window setup
 window=Tk()
@@ -544,15 +561,26 @@ window.geometry("340x440")
 
 #importing Images 
 background_image = PhotoImage(file="images/background.png")
-#importing gif
-background_gif = PhotoImage(file="images/background1.gif")
+
+#importing gif and converting it to a list of frames for animation
+gif = Image.open("images/background1.gif")
+gif_frame=[]
+try:
+    while True:
+        frame = ImageTk.PhotoImage(gif.copy().convert("RGBA"))
+        gif_frame.append(frame)
+        gif.seek(len(gif_frame))  #Move to the next frame
+except EOFError:
+    pass  #End of frames
+
+
 
 #Tkinter Variables
 style = ttk.Style()
-style.theme_use("clam")  # Use the "clam" theme for better aesthetics
+style.theme_use("clam")  #Use the "clam" theme for better aesthetics
 style.configure("Login.TButton", font=("Helvetica", 12, "bold"),  background ="#1528A1", foreground="white")
 style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background ="#1528A1", foreground="white")
-style.map("TButton", background=[("active", "#0D1A66")])  # Change background color on hover
+style.map("TButton", background=[("active", "#0D1A66")])  #Change background color on hover
 style.configure("Treeview", font=("Helvetica", 8), rowheight=25)
 
 
@@ -610,7 +638,7 @@ reg_password_entry.pack()
 #year level dropdown menu
 Label(register_frame, text=" Select Year Level", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
 reg_year_var = StringVar(register_frame)
-reg_year_var.set(YEAR_LEVELS[0])  # Set default value
+reg_year_var.set(YEAR_LEVELS[0])  #Set default value
 reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS) #DropDown box
 reg_year_menu.pack()
 
@@ -634,7 +662,7 @@ welcome.grid(row=0, column=0, pady=10)
 
 #Dropdown values
 hours = [f"{i:02d}" for i in range(1,13)]
-minutes = [f"{i:02d}" for i in range(0, 60, 5)] # 5-minute intervals
+minutes = [f"{i:02d}" for i in range(0, 60, 5)] #5-minute intervals
 ampm= ["AM", "PM"]
 
 
@@ -653,7 +681,7 @@ goal_input_frame.grid(row=2, column=0, pady=10)
 
 combo = ttk.Combobox(goal_input_frame, textvariable=hour_var, values=hours, width=5, state ="readonly")
 combo.grid(row=0, column=0, padx=2)
-Label(goal_input_frame, text=":", font=("Helvetica", 12, "bold")).grid(row=0, column=1, padx=2)
+Label(goal_input_frame, text=":", font=("Helvetica", 12, "bold")).grid(row=0, column=1)
 combo2 = ttk.Combobox(goal_input_frame, textvariable=minute_var, values=minutes, width=5, state ="readonly")
 combo2.grid(row=0, column=2, padx=2)
 combo3 = ttk.Combobox(goal_input_frame, textvariable=ampm_var, values=ampm, width=5, state ="readonly")
@@ -670,16 +698,19 @@ Button(dashboard_frame, text ="Logout", command=show_login).grid(row=8, column=0
 sleep_frame = Frame(content_container, bg="#141B4A")
 sleep_frame.grid(row=0, column=0, sticky="nsew")
 sleep_frame.grid_columnconfigure(0, weight=1)
+sleep_background = Label(sleep_frame, image=gif_frame[0])
+sleep_background.place(relwidth=1, relheight=1)
+
 
 Label(sleep_frame, text="Sleep Session", font=("Helvetica", 16), bg="lightgray").grid(row=0, column=0, pady=10)
 sleep_status = Label(sleep_frame, text="", font=("Helvetica", 12), bg="lightgray")
-sleep_status.grid(row=1, column=0, pady=5)
 timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 45, "bold"), bg="#141B4A", fg="white")
 timer_label.grid(row=2, column=0, pady=5)
 start_button = Button(sleep_frame, text="Start Sleep", command=handle_sleep, width=15, height=2)
 start_button.grid(row=3, column=0, pady=5)
-wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake, state=DISABLED)
+wake_button = Button(sleep_frame, text="Wake Up", command=handle_wake)
 wake_button.grid(row=4, column=0, pady=5)
+wake_button.grid_remove()  
 
 
 
@@ -690,7 +721,7 @@ for mood in MOOD_OPTIONs:
     Button(mood_button_frame, text=mood, command=lambda m=mood: handle_mood(m),
     state=DISABLED
     ).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
-mood_button_frame.grid_remove()  # Disable mood buttons initially
+mood_button_frame.grid_remove()  #Disable mood buttons initially
 
 sleep_back_button=Button(sleep_frame, text="Back to Dashboard", command=show_dashboard)
 sleep_back_button.grid(row=6, column=0, pady=5)
@@ -703,7 +734,7 @@ history_frame = Frame(content_container)
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
-histroy_background = Label(history_frame, image=background_image)
+
 Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=0, column=0, pady=10)
 
 #TreeView Table
@@ -747,7 +778,7 @@ button_frame= Frame(journal_popup)
 button_frame.pack(pady=5)
 Button(button_frame, text="Save Note", command=handle_note).grid(row=0, column=0, padx=5)
 Button(button_frame, text="Close", command=close_journal).grid(row=0, column=1, padx=5)
-close_journal()  # Hide the journal popup initially
+close_journal()  #Hide the journal popup initially
 
 
 #Graphs and Feedback Frame
@@ -780,6 +811,8 @@ graphs_back_button.grid(row=5, column=0, pady=5)
 login_frame.tkraise()
 #Function to update the bedtime timer every second
 update_bedtime_timer()  
+
+animate_gif()  #Start the GIF animation in the history frame
 
 #This is to keep the window open and running until the user closes it 
 window.mainloop()
