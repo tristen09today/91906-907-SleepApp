@@ -25,6 +25,7 @@ HISTORY_FILE = "sleep_history.json"
 YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
 MOOD_OPTIONs= ["😁 Great", "🙆 Okay", "🥱 Tired"]
+alarm_count = 0  
 
 #Generating a key to encrypt the user's sleep history and sleep quality analysis
 def load_key():
@@ -292,25 +293,34 @@ def handle_register():
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
         
-#This function is to set the user's sleep goal and show the remaining time until when the user should go to bed
 def set_goal(goal_time):
     """Sets the user's chosen bedtime goal """
     bedtime_goalvar.set(goal_time)
     alarm_on.set(False)
+
 def show_alarm():
+    """This function shows a popup window when the user's bedtime goal is reached."""
     alarm_popup = Toplevel(window)
     alarm_popup.title("Bedtime Reminder")
     alarm_popup.geometry("300x100")
-    Label(alarm_popup, text="It's time to go to bed!", font=("Helvetica", 14)).pack(pady=20)
-    Button(alarm_popup, text="OK", command=alarm_popup.destroy).pack(pady=10)
+    Label(alarm_popup, text="ITS TIME TO GO TO BED!", font=("Helvetica", 14)).pack(pady=20)
+    Button(alarm_popup, text="OK", command=lambda:stop_alarm(alarm_popup)).pack(pady=10)
+    play_alarm()  #Play the alarm sound when the popup is shown
 
-def play_alarm(count=0):
+def stop_alarm(alarm_popup):
+    """This function stops the alarm sound and closes the alarm popup window."""
+    alarm_popup.destroy()  #Close the alarm popup      
+
+
+def play_alarm(alarm_popup,count=0):
     """This function plays the alarm sound when the user's bedtime goal is reached."""
-    if count < 100:  #Play the alarm sound 5 times
+    if alarm_popup.winfo_exists() and count < 100:  #Play the alarm sound for 10 seconds or until the popup is closed
         window.bell()  #Play the alarm sound
-        window.after(50, play_alarm, count + 1)  #Call the function again after 1 second
-        play_alarm
+        window.after(150, play_alarm, count + 1)  #Call the function again after 1 second
         
+
+
+
 def update_bedtime_timer():
         """This function updates the bedtime timer every second to show the 
         remaining time until the user's bedtime goal."""
@@ -354,16 +364,15 @@ def update_timer(sleep_time):
 def handle_sleep():
     """To show the starting time of the sleep session and disable 
     the start button while enabling the wake button"""
-    global sleep_time
     sleep_time = datetime.now()
     
     sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}")
     sleep_status.grid(row=1, column=0, pady=5)
+    start_button.config(state=DISABLED) #Disable the start button while sleeping
+    wake_button.config(state=NORMAL, command = lambda: handle_wake(sleep_time))  #Enable the wake button and set its command
+    wake_button.config(state=NORMAL)
 
-
-
-    start_button.config(state=DISABLED)
-    wake_button.config(state=NORMAL)    
+    #For each button in the mood_button_frame, disable it while sleeping    
     for button in mood_button_frame.winfo_children():
         button.config(state=DISABLED)  
     wake_button.grid()  
@@ -372,7 +381,7 @@ def handle_sleep():
     update_timer(sleep_time)  
 
     
-def handle_wake():
+def handle_wake(sleep_time):
     """ To show the duration of the sleep session and enable 
         the start button while disabling the wake button   """
     wake_time = datetime.now()
@@ -715,7 +724,7 @@ timer_label = Label(sleep_frame, text="00:00:00", font=("Helvetica", 60, "bold")
 timer_label.grid(row=2, column=0, pady=5)
 start_button = ttk.Button(sleep_frame, text="Start Sleep", command=handle_sleep, style = "Sleep.TButton")
 start_button.grid(row=3, column=0, pady=10)
-wake_button = ttk.Button(sleep_frame, text="Wake Up", command=handle_wake,style = "Sleep.TButton", state=DISABLED)
+wake_button = ttk.Button(sleep_frame, text="Wake Up",style = "Sleep.TButton", state=DISABLED)
 wake_button.grid(row=4, column=0, pady=5)
 wake_button.grid_remove()  
 
