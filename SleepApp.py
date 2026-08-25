@@ -296,26 +296,48 @@ def handle_register():
 def set_goal(goal_time):
     """Sets the user's chosen bedtime goal """
     bedtime_goalvar.set(goal_time)
+    alarm_on.set(False)
+def show_alarm():
+    alarm_popup = Toplevel(window)
+    alarm_popup.title("Bedtime Reminder")
+    alarm_popup.geometry("300x100")
+    Label(alarm_popup, text="It's time to go to bed!", font=("Helvetica", 14)).pack(pady=20)
+    Button(alarm_popup, text="OK", command=alarm_popup.destroy).pack(pady=10)
 
+def play_alarm(count=0):
+    """This function plays the alarm sound when the user's bedtime goal is reached."""
+    if count < 100:  #Play the alarm sound 5 times
+        window.bell()  #Play the alarm sound
+        window.after(50, play_alarm, count + 1)  #Call the function again after 1 second
+        play_alarm
+        
 def update_bedtime_timer():
         """This function updates the bedtime timer every second to show the 
         remaining time until the user's bedtime goal."""
         goal_time = bedtime_goalvar.get()
         if goal_time != "": #if the user has set a bedtime goal, calculate the remaining time until that goal
-            goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
             now = datetime.now()
-
-            goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
+            
+            if now.strftime("%I:%M %p") == goal_time and not alarm_on.get():  #If the current time matches the goal time and the alarm is not already on
+                    alarm_on.set(True)  #Set the alarm on
+                    play_alarm()  #Play the alarm sound
+                    show_alarm()  #Show the alarm popup
+                    bedtime_status.config(text="GO TO SLEEP!")  #Reset the bedtime status to 0
+                    bedtime_goalvar.set("")  #Reset the bedtime goal to empty
+            else:
+                goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
+                goal_datetime = now.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
        
-            if goal_datetime<now:
-                goal_datetime += timedelta(days=1)  #If the goal time is earlier than now, assume it's for the next day
+                if goal_datetime<now:
+                    goal_datetime += timedelta(days=1)  #If the goal time is earlier than now, assume it's for the next day
 
-            time_remaining = goal_datetime - now
-            total_seconds = int(time_remaining.total_seconds())
-            hours= total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-            bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
+                time_remaining = goal_datetime - now
+                total_seconds = int(time_remaining.total_seconds())
+                hours= total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
+
         window.after(100, update_bedtime_timer)  #Update every second
          
 def update_timer(sleep_time):
@@ -334,34 +356,11 @@ def handle_sleep():
     the start button while enabling the wake button"""
     global sleep_time
     sleep_time = datetime.now()
-    goal_time = bedtime_goalvar.get()
-    if goal_time != "":
-        goal_time_obj = datetime.strptime(goal_time, "%I:%M %p")
-        goal_datetime = sleep_time.replace(hour=goal_time_obj.hour, minute=goal_time_obj.minute, second=0, microsecond=0)
-
-        #If the goal time is earlier than the current time, assume it's for the next day
-        difference = sleep_time - goal_datetime
-
-        if difference.total_seconds() > 0:
-                sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}\n"
-                f"you are going to bed {int(difference.total_seconds() // 60)} minutes later than your goal.", fg="red")
-                sleep_status.grid(row=1, column=0, pady=5)
-
-
-        else:
-             sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}\n"
-            f"you are going to bed {int(-difference.total_seconds() // 60)} minutes earlier than your goal.", fg="green")
-             sleep_status.grid(row=1, column=0, pady=5)
     
-    else:   
-
-        sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}")
-        sleep_status.grid(row=1, column=0, pady=5)
+    sleep_status.config(text=f"Started sleeping at: {sleep_time.strftime('%I:%M:%S %p')}")
+    sleep_status.grid(row=1, column=0, pady=5)
 
 
-    #reset bedtime status  after starting sleep
-    bedtime_goalvar.set("")  #Clear the bedtime goal after starting sleep
-    bedtime_status.config(text="")
 
     start_button.config(state=DISABLED)
     wake_button.config(state=NORMAL)    
@@ -565,7 +564,6 @@ window.geometry("340x440")
 #importing Images 
 background_image = PhotoImage(file="images/background.png")
 
-
 #importing gif and converting it to a list of frames for animation
 gif = Image.open("images/background1.gif")
 gif_frame=[]
@@ -578,8 +576,11 @@ except EOFError:
     pass  #End of frames
 
 
-
 #Tkinter Variables
+bedtime_goalvar = StringVar(value="")
+alarm_on = BooleanVar(value=False)
+
+#Style Variables
 style = ttk.Style()
 style.theme_use("clam")  #Use the "clam" theme for better aesthetics
 #For login and register buttons, set the font, background color, and foreground color
@@ -670,7 +671,7 @@ welcome.grid(row=0, column=0, pady=10)
 
 #Dropdown values
 hours = [f"{i:02d}" for i in range(1,13)]
-minutes = [f"{i:02d}" for i in range(0, 60, 5)] #5-minute intervals
+minutes = [f"{i:02d}" for i in range(60)] #all the minutes
 ampm= ["AM", "PM"]
 
 
@@ -781,29 +782,28 @@ close_journal()  #Hide the journal popup initially
 
 
 #Graphs and Feedback Frame
-graphs_frame = Frame(content_container, bg="lightgray")
+graphs_frame = Frame(content_container, bg="#FFEFB3")
 graphs_frame.grid(row=0, column=0, sticky="nsew")
 graphs_frame.grid_columnconfigure(0, weight=1)
 
-graphs_label = Label(graphs_frame, text="Graphs and Feedback", font=("Helvetica", 16, "bold"), bg="lightgray")
-graphs_label.grid(row=0, column=0, pady=5) 
+Label(graphs_frame, text="📊 Sleep and Feedback", font=("Helvetica", 16, "bold"), bg="#FFEFB3",  fg= "#1528A1").grid(row=1, column=0, pady=5) 
 
-graph_button_frame=Frame(graphs_frame, bg="lightgray")
-graph_button_frame.grid(row=2, column=0, pady=5)
-Button(graph_button_frame, text="Mood Graph", command=mood_graph).grid(row=0, column=0, padx=5)
-Button(graph_button_frame, text="Sleep Graph", command=sleep_graph).grid(row=0, column=1, padx=5)
+graph_button_frame=Frame(graphs_frame, bg="#FFEFB3")
+graph_button_frame.grid(row=2, column=0, pady=10)
+ttk.Button(graph_button_frame, text="Mood Graph", command=mood_graph, style = "Login.TButton").grid(row=0, column=0, padx=5)
+ttk.Button(graph_button_frame, text="Sleep Graph", command=sleep_graph, style = "Login.TButton").grid(row=0, column=1, padx=5)
 
-Label(graphs_frame, text="Improvement:", font=("Helvetica", 16, "bold"), bg="lightgray").grid(row=3, column=0, pady=5)
+Label(graphs_frame, text="🤔 Sleep Feedback:", font=("Helvetica", 16, "bold"), bg="#FFEFB3",  fg= "#1528A1").grid(row=3, column=0, pady=5)
 
 improvement_frame = Frame(graphs_frame, bg="white", bd=1, relief="solid")
-improvement_frame.grid(row=4, column=0, pady=5)
+improvement_frame.grid(row=4, column=0, pady=10)
 
-average_label = Label(improvement_frame, text="", font=("Helvetica", 14))
+average_label = Label(improvement_frame, text="", font=("Helvetica", 14, "bold"), bg = "white")
 average_label.grid(row=0, column=0, pady=5)
-advices_label = Label(improvement_frame, text="", font=("Helvetica", 14))
+advices_label = Label(improvement_frame, text="", font=("Helvetica", 14, "bold"), bg = "white")
 advices_label.grid(row=1, column=0, pady=5)
 
-graphs_back_button = Button(graphs_frame, text="Back to Dashboard", command=show_dashboard)
+graphs_back_button = ttk.Button(graphs_frame, text="Back to Dashboard", command=show_dashboard, style = "Login.TButton")
 graphs_back_button.grid(row=5, column=0, pady=5)
 
 #Show the login frame first when the app opens
