@@ -1,7 +1,8 @@
-''' This is Version 4 of the code for my Sleep App.
-This version will focus on improving the sleep goal system, the ability to delete incorrect sleep recors, 
+''' Sleep App Version 4:
+Version 4 will focus on improving the sleep goal system, the ability to delete incorrect sleep recors, 
 a journalling systyem using complex techniques, bedtime reminders, and improvements to the interface such as icons and clearer layouts
-The program will also have more classes to reduce clutter and repetition in the code. Implementing Classes, inheritance and polymorphism. '''
+The program will also have more classes to reduce clutter and repetition in the code. 
+This version will also use more classes, inheritacne, and polymorphism to seperate different parts of the program and reduce repeated code'''
 
 #importing libraries
 from tkinter import *
@@ -20,15 +21,15 @@ from PIL import Image, ImageTk
 USER_FILE  ="users.json"
 MIN_PASS= 8
 MIN_USER=3
-KEY_FILE = "histroy.key"
-HISTORY_FILE = "sleep_history.json"
 YEAR_LEVELS = range(1, 14)  #Year levels from 1 to 13
 YEAR_ELIGIBILITY = [9, 10, 11, 12, 13] 
+KEY_FILE = "histroy.key"
+HISTORY_FILE = "sleep_history.json"
 MOOD_OPTIONs= ["😁 Great", "🙆 Okay", "🥱 Tired"]
-alarm_count = 0  
 
-#Generating a key to encrypt the user's sleep history and sleep quality analysis
+#loads the encryption key or creates if it does not exist
 def load_key():
+    """Loads the fernet enryption key used to protect sleep data"""
     try:
         with open(KEY_FILE, "rb") as file:
             return file.read()
@@ -41,10 +42,9 @@ def load_key():
 key = load_key()
 f = Fernet(key)
 
-#using inheritance to create a base class for user management and a derived class for sleep session management
-
+#Base class that proides JSON loading and saving for other storage classes
 class JSONStore:
-    """This class is used to manage the data stored in a json file."""
+    """Base class used to load  and save data in JSON files"""
     def __init__(self, filename):
         self.filename = filename
         self.data = self.load_data()
@@ -58,6 +58,7 @@ class JSONStore:
             return {}
 
     def save_data(self):
+        """This function saves the data to the json file."""
         with open(self.filename, "w") as file:
             json.dump(self.data, file, indent=4)
 
@@ -91,7 +92,7 @@ class UserStore(JSONStore):
         return False
     
 class SleepSession(JSONStore):
-    """handles each user's sleep session, also inherits from the JSONStore class to manage sleep data"""
+    """Base class for accessing and protecting a user's sleep data"""
     def __init__(self, filename, username):
         super().__init__(filename)
         self.username = username
@@ -99,16 +100,17 @@ class SleepSession(JSONStore):
             self.data[username] = []
 
     def encrypt_value(self, value):
-        """This function encrypts a given value using Fernet encryption."""
+        """Encrypts private sleep data before it is saved."""
         return f.encrypt(value.encode()).decode()
     
     def decrypt_value(self, value):
-        """This function decrypts a given value using Fernet decryption."""
+        """Decrypts stored sleep data so it can be used by the program"""
         return f.decrypt(value.encode()).decode()
 
 class SleepHistory(SleepSession):
     """This class manages the sleep history for each user, inheriting from SleepSession."""
     def add_sleep_entry(self, entry):
+        """adds a completed sleep entry and saves the updated history """
         self.data[self.username].append(entry)
         self.save_data()
     def delete_sleep_entry(self, index):
@@ -120,7 +122,7 @@ class SleepHistory(SleepSession):
         return False
     
 class SleepJournal(SleepHistory):
-    """This class adds journaling functionality to the sleep history, allowing users to add notes to their sleep entries."""
+    """adds ecrypted journal notes to nidivdual sleep history entries."""
     def add_note(self,index, note):
         if 0 <=index < len(self.data[self.username]):  #Check if the index is valid
             self.data[self.username][index]["note"] = self.encrypt_value(note)  #Encrypt the note before saving
@@ -134,9 +136,9 @@ class SleepJournal(SleepHistory):
             return self.decrypt_value(encrypted_note) if encrypted_note else ""
         return ""
 class SleepAnalysis(SleepSession):
-    """This class gets data from the user's sleep history for analysis"""
+    """processes stored sleep data so it can be used for graphs and feedback"""
     def get_duration(self):
-        """This function retrieves the sleep durations from the user's sleep history."""
+        """decrypts and returns the recorded sleep duration."""
         durations = []
         for entry in self.data[self.username]:
             try:
@@ -144,11 +146,12 @@ class SleepAnalysis(SleepSession):
                 duration_parts = duration_str.split(':')
                 hours = int(duration_parts[0])
                 durations.append(hours)
-            except:
-                pass
+            except(ValueError, KeyError):
+                pass      
         return durations
     
     def get_mood(self):
+        """decrypts and returns the recorded mood for each sleep entry."""
         moods=[]
         for entry in self.data[self.username]:
             if entry.get("mood"):
@@ -158,10 +161,25 @@ class SleepAnalysis(SleepSession):
                 except:
                     pass
         return moods
+    
     def get_average(self):
-        durations = self.get_duration()
+        """calculates the user's  average sleep """
+        durations = []
+        for entry in self.data[self.username]:
+            try:
+                duration_str = self.decrypt_value(entry["duration"])
+                duration_parts = duration_str.split(':')
+                hours = int(duration_parts[0])
+                minutes = int(duration_parts[1])
+                total_hours = hours + minutes / 60  #Convert minutes to hours and add to total
+                durations.append(total_hours)
+
+            except(ValueError, KeyError):
+                pass
+        #Calculate the average sleep if sleep records exist
         if durations:
-            return sum(durations) / len(durations)
+            average_duration = sum(durations) / len(durations)
+            return average_duration
         return None
         
     
@@ -206,6 +224,7 @@ class DurationGraph(SleepGraph):
                 graph_count.append(counts[i]) #only append if the count is bigger than 0 
                 graph_label.append(labels[i]) #if count is bigger than 0, append the label to the graph. 
 
+       
         #Pie chart to show the distribution of sleep durations
         plt.pie(graph_count, labels=graph_label, autopct='%1.1f%%', startangle=90)
         plt.title(f"{self.username}'s Sleep Duration Distribution")
@@ -235,10 +254,6 @@ def show_dashboard():
 def show_sleep():
     """Brings the sleep session frame to the front and hides other frames."""
     sleep_frame.tkraise()
-
-def show_history():
-    """Brings the sleep history frame to the front and hides other frames."""
-    history_frame.tkraise()
 
 def show_graphs():
     """Brings the graphs and analysis frame to the front and hides other frames."""
@@ -292,6 +307,7 @@ def handle_register():
         
     else:
         reg_message_label.config(text="Username already exists. Please choose another.", fg="red")
+        reg_message_label.pack(pady=5)
         
 def set_goal(goal_time):
     """Sets the user's chosen bedtime goal """
@@ -314,9 +330,9 @@ def stop_alarm(alarm_popup):
 
 def play_alarm(alarm_popup,count=0):
     """This function plays the alarm sound when the user's bedtime goal is reached."""
-    if alarm_popup.winfo_exists() and count < 100:  #Play the alarm sound for 10 seconds or until the popup is closed
+    if alarm_popup.winfo_exists() and count < 100:  #Play the alarm sound for 100 seconds or until the popup is closed
         window.bell()  #Play the alarm sound
-        window.after(150, play_alarm, alarm_popup, count + 1)  #Call the function again after 1 second
+        window.after(1000, play_alarm, alarm_popup, count + 1)  #Call the function again after 1 second
         
 
 
@@ -347,7 +363,7 @@ def update_bedtime_timer():
                 seconds = total_seconds % 60
                 bedtime_status.config(text=f"BedTime : {hours:02d}:{minutes:02d}:{seconds:02d}",)
 
-        window.after(100, update_bedtime_timer)  #Update every second
+        window.after(1000, update_bedtime_timer)  #Update bedtime timer every second
          
 def update_timer(sleep_time):
     """This function updates the sleep timer every 
@@ -387,24 +403,27 @@ def handle_wake(sleep_time):
     duration = wake_time - sleep_time
     duration = duration - timedelta(microseconds=duration.microseconds)  
     sleep_status.config(text=f"Woke up at: {wake_time.strftime('%I:%M:%S %p')}")
-    start_button.config(state=NORMAL)
+
+    start_button.config(state=NORMAL) 
     wake_button.config(state=DISABLED)
+    #for loop to enable the mood buttons after waking up
     for button in mood_button_frame.winfo_children():
         button.config(state=NORMAL)  
-        wake_button.grid_remove()  
-        mood_button_frame.grid()  
-        dashboard_frame.grid()  
-        sleep_back_button.grid()  
+        
+    wake_button.grid_remove()  
+    mood_button_frame.grid()  
+    sleep_back_button.grid()  
  
-    #Save the sleep session to the user's sleep history
+    #Saves the sleep session to the user's sleep history
     username = username_entry.get()
+    #Creates a SleepHistory object for current user
     sleep_history = SleepHistory(HISTORY_FILE, username)
     sleep_entry = {
-        "start_time": sleep_time.strftime('%Y-%m-%d %I:%M:%S %p'),
-        "end_time": wake_time.strftime('%Y-%m-%d %I:%M:%S %p'),
+        "start_time": sleep_time.strftime('%Y/%m/%d %I:%M:%S %p'),
+        "end_time": wake_time.strftime('%Y/%m/%d %I:%M:%S %p'),
         "duration": str(duration)
     }
-  
+    #Encrypt the sleep entry
     encrypted_entry = {
         "start_time":sleep_history.encrypt_value(sleep_entry["start_time"]),
         "end_time": sleep_history.encrypt_value(sleep_entry["end_time"]),
@@ -412,6 +431,7 @@ def handle_wake(sleep_time):
         "mood": "",
         "note": ""
     }
+    #This adds the encrypted sleep entry to the user's sleep history and saves it to the json file
     sleep_history.add_sleep_entry(encrypted_entry)
 
 def handle_mood(mood):
@@ -433,8 +453,7 @@ def handle_mood(mood):
 
 #Function to show the user's sleep history, decrypting the sleep time.
 def show_history():
-    """This function displays the user's sleep history in a table format. It decrypts 
-    the stored sleep data and appends the history frame."""
+    """ It decrypts the current users;s sleep records and display them ni the TreeView"""
     history_frame.tkraise()
     username = username_entry.get()
     sleep_history = SleepHistory(HISTORY_FILE, username)
@@ -442,14 +461,15 @@ def show_history():
     for row in history_table.get_children():
         history_table.delete(row)  #Clear existing rows in the table
     if username in sleep_history.data:
-        
-        #it does a for loop of the user's entry and organises it by index 1, index2, index3
+
+        #Loops thorugh each sleep entry and uses its index as the TreeVie item ID  eg index 0,1,2,3,4
         for index, entry in enumerate(sleep_history.data[username]):
             
             if  entry.get("mood"):
                 mood = sleep_history.decrypt_value(entry["mood"])
             else:
                 mood = "Not-recorded"
+                
             #to decrypt the sleep history and display it in a table format
             decrypted_entry = {
                 "start_time":sleep_history.decrypt_value(entry["start_time"]),
@@ -515,7 +535,7 @@ def delete_entry():
     """This function deletes a sleep entry from the user's sleep history."""
     selected = history_table.selection()
     if not selected:
-         messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
+         messagebox.showwarning("No Selected", "Please select a sleep entry to delete.")
          return
     index = int(selected[0])  #Get the selected entry index
     answer = messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
@@ -527,15 +547,14 @@ def delete_entry():
             
             
 def mood_graph():
-    """This function generates a pie chart 
-    showing the distribution of moods from the user's sleep history."""
+    """Creates a bar graph shownig the user's recorded moods"""
     username = username_entry.get()
     mood_analysis = MoodGraph(HISTORY_FILE, username)
     mood_analysis.create_graph()  #Call the create_graph method of MoodGraph
    
 
 def sleep_graph():
-    """This function generates a bar graph showing the duration of sleep sessions from the user's sleep history."""
+    """Creates a pie chart showing the distribution of sleep durations."""
     username = username_entry.get()
     duration_analysis = DurationGraph(HISTORY_FILE, username)
     duration_analysis.create_graph()  #Call the create_graph method of DurationGraph
@@ -543,7 +562,7 @@ def sleep_graph():
    
 
 def improvements():
-    """Tihs finction calculates the average sleep duration from the user's sleep history and 
+    """calculates the average sleep duration from the user's sleep history and 
     provides advice based on the average."""
     username = username_entry.get()
     sleep_analysis = SleepAnalysis(HISTORY_FILE, username)
@@ -564,17 +583,19 @@ def improvements():
 
 #This function animates the gif in the sleep frame by updating the image
 def animate_gif(frame=0):
+    """ animates the gif in the sleep frame by updating the image every 100 milliseconds."""
     sleep_background.config(image=gif_frame[frame])
     frame +=1
     if frame == len(gif_frame):
         frame = 0
-    history_frame.after(100, animate_gif, frame)  
+    sleep_frame.after(100, animate_gif, frame)  
 
  
 #Window setup
 window=Tk()
 window.title("sleep app")
 window.geometry("340x440")
+window.resizable(False, False)  #Disable window resizing
 
 #importing Images 
 background_image = PhotoImage(file="images/background.png")
@@ -592,6 +613,14 @@ except EOFError:
 
 
 #Tkinter Variables
+
+
+#Dropdown values
+hours = [f"{i:02d}" for i in range(1,13)]
+minutes = [f"{i:02d}" for i in range(60)] #all the minutes
+ampm= ["AM", "PM"]
+
+#bedtime goal and alarm variables
 bedtime_goalvar = StringVar(value="")
 alarm_on = BooleanVar(value=False)
 
@@ -605,14 +634,15 @@ style.configure("Function.TButton", font=("Helvetica", 10, "bold"),  background 
 #For Sleep and Wake buttons, set the font, background color, and foreground color
 style.configure("Sleep.TButton", font=("Helvetica", 18, "bold"),  background ="#2940C7", foreground="white")
 style.map("TButton", background=[("active", "#0D1A66")])  #Change background color on hover
-style.configure("Treeview", font=("Helvetica", 9), rowheight=25)
+
+style.configure("Treeview", font=("Helvetica", 9 ))
+style.configure("Treeview.Heading", font=("Helvetica", 11, "bold"), background="#FFEFB3", foreground="#1528A1")
 
 
 #Dropdown variables
 hour_var = StringVar(value="10")
 minute_var = StringVar(value="00")
 ampm_var = StringVar(value="PM")
-bedtime_goalvar = StringVar(value="")
 
 
 header_frame = Frame(window, bg = "#1528A1")
@@ -644,7 +674,7 @@ password_entry = Entry(login_frame, show="*", width = 13, bg = "#FFEFB3", fg = "
 password_entry.pack()
 ttk.Button(login_frame, text="Login", command=handle_login, style="Login.TButton").pack(pady=10)
 ttk.Button(login_frame, text="Register", command=show_register, style="Login.TButton").pack(pady=5)
-login_message_label = Label(login_frame, text="", font=("Helvetica", 12), bg = "#1528A1")  
+login_message_label = Label(login_frame, text="", font=("Helvetica", 12, "bold"), bg = "#1528A1")  
 
 
 #register Frame
@@ -668,7 +698,7 @@ reg_year_menu.pack()
 
 ttk.Button(register_frame, text="Register", command=handle_register, style ="Login.TButton").pack(pady=5)
 ttk.Button(register_frame, text="Back to Login", command=show_login, style="Login.TButton").pack(pady=5)
-reg_message_label = Label(register_frame, text="", font=("Helvetica", 12), bg = "#1528A1") 
+reg_message_label = Label(register_frame, text="", font=("Helvetica", 12, "bold"), bg = "#1528A1") 
 
 
 #Dashboard Frame
@@ -682,12 +712,6 @@ dashboard_background.place(relwidth=1, relheight=1)
 #welcome section
 welcome = Label(dashboard_frame, text="", font=("Helvetica", 13, "bold"), bg="white")
 welcome.grid(row=0, column=0, pady=10)
-
-
-#Dropdown values
-hours = [f"{i:02d}" for i in range(1,13)]
-minutes = [f"{i:02d}" for i in range(60)] #all the minutes
-ampm= ["AM", "PM"]
 
 
 #Layout
@@ -740,25 +764,30 @@ mood_button_frame.grid(row=5, column=0, pady=5)
 for mood in MOOD_OPTIONs:
     ttk.Button(mood_button_frame, text=mood, command=lambda m=mood:
                 handle_mood(m), style = "Login.TButton", state=DISABLED).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
-mood_button_frame.grid_remove()  #Disable mood buttons initially
+mood_button_frame.grid_remove()  #hide the mood choices until the user wakes up
 
 sleep_back_button=ttk.Button(sleep_frame, text="Back to Dashboard", command=show_dashboard, style = "Login.TButton")
 sleep_back_button.grid(row=6, column=0, pady=5)
 
 #Sleep History Frame
-history_frame = Frame(content_container, bg = "#FFEFB3")
+history_frame = Frame(content_container)
+Label(history_frame, image=background_image).place(relwidth=1, relheight=1)
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
 
-Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="white", fg = "black").grid(row=0, column=0, pady=10)
+Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="white", fg = "#1528A1").grid(row=0, column=0, pady=10)
 
 #TreeView Table
 #instead of using a frame to display the sleep history, I used a treeview table to make it easier to read and scroll through the history
 columns = ("start_time", "end_time", "duration", "mood") 
 history_table = ttk.Treeview(history_frame, columns=columns, show="headings", height=8) #
-for column in columns:
-    history_table.heading(column, text=column)
+
+#Define the headings for each column in the table and rename the columns to make it easier to read and understand
+history_table.heading("start_time", text = "Start Time")
+history_table.heading("end_time", text = "End Time")
+history_table.heading("duration", text = "Duration")
+history_table.heading("mood", text = "Mood")
 
 history_table.column("start_time", width=100)
 history_table.column("end_time", width=100)
@@ -766,7 +795,7 @@ history_table.column("duration", width=55)
 history_table.column("mood", width=68)
 history_table.grid(row=1, column=0, columnspan=5, pady=5)
 
-#scrollbar for the canvas
+#scrollbar to make it easier to scroll through the history table
 history_scrollbar = Scrollbar(history_frame, orient="vertical", command=history_table.yview, width=13)
 history_scrollbar.grid(row=1, column=5, sticky="ns")
 history_table.configure(yscrollcommand=history_scrollbar.set)
@@ -826,7 +855,7 @@ login_frame.tkraise()
 #Function to update the bedtime timer every second
 update_bedtime_timer()  
 
-animate_gif()  #Start the GIF animation in the history frame
+animate_gif()  #Start the GIF animation no the sleep screen
 
 #This is to keep the window open and running until the user closes it 
 window.mainloop()
