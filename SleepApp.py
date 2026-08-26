@@ -168,7 +168,7 @@ class SleepAnalysis(SleepSession):
 #Using polymorphism to create a base class for graphs and derived classes for specific graph types 
 class SleepGraph(SleepAnalysis):
     """This is the base class for creating graphs using polymorphism"""
-    def create_graph():
+    def create_graph(self):
         pass
 
 class MoodGraph(SleepGraph):
@@ -305,7 +305,7 @@ def show_alarm():
     alarm_popup.geometry("300x100")
     Label(alarm_popup, text="ITS TIME TO GO TO BED!", font=("Helvetica", 14)).pack(pady=20)
     Button(alarm_popup, text="OK", command=lambda:stop_alarm(alarm_popup)).pack(pady=10)
-    play_alarm()  #Play the alarm sound when the popup is shown
+    play_alarm(alarm_popup)  #Play the alarm sound when the popup is shown
 
 def stop_alarm(alarm_popup):
     """This function stops the alarm sound and closes the alarm popup window."""
@@ -316,7 +316,7 @@ def play_alarm(alarm_popup,count=0):
     """This function plays the alarm sound when the user's bedtime goal is reached."""
     if alarm_popup.winfo_exists() and count < 100:  #Play the alarm sound for 10 seconds or until the popup is closed
         window.bell()  #Play the alarm sound
-        window.after(150, play_alarm, count + 1)  #Call the function again after 1 second
+        window.after(150, play_alarm, alarm_popup, count + 1)  #Call the function again after 1 second
         
 
 
@@ -330,7 +330,6 @@ def update_bedtime_timer():
             
             if now.strftime("%I:%M %p") == goal_time and not alarm_on.get():  #If the current time matches the goal time and the alarm is not already on
                     alarm_on.set(True)  #Set the alarm on
-                    play_alarm()  #Play the alarm sound
                     show_alarm()  #Show the alarm popup
                     bedtime_status.config(text="GO TO SLEEP!")  #Reset the bedtime status to 0
                     bedtime_goalvar.set("")  #Reset the bedtime goal to empty
@@ -442,8 +441,9 @@ def show_history():
    
     for row in history_table.get_children():
         history_table.delete(row)  #Clear existing rows in the table
-
     if username in sleep_history.data:
+        
+        #it does a for loop of the user's entry and organises it by index 1, index2, index3
         for index, entry in enumerate(sleep_history.data[username]):
             
             if  entry.get("mood"):
@@ -457,7 +457,10 @@ def show_history():
                 "duration": sleep_history.decrypt_value(entry["duration"]),
                 "mood": mood
             }
-            history_table.insert("", "end", iid=index, 
+            #This inserts the decrypted sleep entry into the history table 
+            history_table.insert("", "end", iid=index, #"" is the root and "end" is to append the  entry at the end of the table
+                                 
+            #These are the values displayed on the TreeView
             values=(
                 decrypted_entry["start_time"],
                 decrypted_entry["end_time"], 
@@ -510,8 +513,11 @@ def close_journal():
 
 def delete_entry():
     """This function deletes a sleep entry from the user's sleep history."""
-    index = int(history_table.selection()[0])  #Get the selected entry index
-
+    selected = history_table.selection()
+    if not selected:
+         messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
+         return
+    index = int(selected[0])  #Get the selected entry index
     answer = messagebox.askyesno("Delete Entry", "Are you sure you want to delete this entry?")
     if answer:
         username = username_entry.get()
@@ -657,7 +663,7 @@ reg_password_entry.pack()
 Label(register_frame, text=" Select Year Level", font=("Helvetica", 14, "bold"), bg="#1528A1", fg = "white").pack(pady=10)
 reg_year_var = StringVar(register_frame)
 reg_year_var.set(YEAR_LEVELS[0])  #Set default value
-reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS) #DropDown box
+reg_year_menu = OptionMenu(register_frame, reg_year_var, *YEAR_LEVELS) #it is called as a class and creates a dropdown menu with the year levels as options
 reg_year_menu.pack()
 
 ttk.Button(register_frame, text="Register", command=handle_register, style ="Login.TButton").pack(pady=5)
@@ -733,19 +739,19 @@ mood_button_frame = Frame(sleep_frame)
 mood_button_frame.grid(row=5, column=0, pady=5)
 for mood in MOOD_OPTIONs:
     ttk.Button(mood_button_frame, text=mood, command=lambda m=mood:
-                handle_mood(m), style = "Function.TButton", state=DISABLED).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
+                handle_mood(m), style = "Login.TButton", state=DISABLED).grid(row=0, column=MOOD_OPTIONs.index(mood), padx=5)
 mood_button_frame.grid_remove()  #Disable mood buttons initially
 
 sleep_back_button=ttk.Button(sleep_frame, text="Back to Dashboard", command=show_dashboard, style = "Login.TButton")
 sleep_back_button.grid(row=6, column=0, pady=5)
 
 #Sleep History Frame
-history_frame = Frame(content_container, bg = "lightgrey")
+history_frame = Frame(content_container, bg = "#FFEFB3")
 history_frame.grid(row=0, column=0, sticky="nsew")
 history_frame.grid_columnconfigure(0, weight=1)
 
 
-Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="lightgrey").grid(row=0, column=0, pady=10)
+Label(history_frame, text="Sleep History", font=("Helvetica", 16, "bold"), bg="white", fg = "black").grid(row=0, column=0, pady=10)
 
 #TreeView Table
 #instead of using a frame to display the sleep history, I used a treeview table to make it easier to read and scroll through the history
