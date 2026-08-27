@@ -4,7 +4,8 @@ a journalling systyem using complex techniques, bedtime reminders, and improveme
 The program will also have more classes to reduce clutter and repetition in the code. 
 This version will also use more classes, inheritacne, and polymorphism to seperate different parts of the program and reduce repeated code'''
 
-#importing libraries
+'''importing lbiraries which will be used for creating the GUI, storing data, hashing passwords,  calculating time, encrypting data, 
+creating graphs, showing messageboxes and displaying images/gifs'''
 from tkinter import *
 from tkinter import ttk
 import json
