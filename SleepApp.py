@@ -115,7 +115,7 @@ class SleepHistory(SleepSession):
         self.data[self.username].append(entry)
         self.save_data()
     def delete_sleep_entry(self, index):
-        """This function deletes one sleep record ."""
+        """This method deletes one sleep record ."""
         if 0 <= index < len(self.data[self.username]): #Check if the index is valid
             del self.data[self.username][index]
             self.save_data()
@@ -123,7 +123,7 @@ class SleepHistory(SleepSession):
         return False
     
 class SleepJournal(SleepHistory):
-    """adds ecrypted journal notes to nidivdual sleep history entries."""
+    """adds ecrypted journal notes to indivdiual sleep history entries."""
     def add_note(self,index, note):
         if 0 <=index < len(self.data[self.username]):  #Check if the index is valid
             self.data[self.username][index]["note"] = self.encrypt_value(note)  #Encrypt the note before saving
